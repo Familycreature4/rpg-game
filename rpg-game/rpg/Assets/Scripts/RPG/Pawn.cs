@@ -48,7 +48,7 @@ public class Pawn : MonoBehaviour
         }
 
         // Move the gameobject to the world coordinates
-        Vector3 targetPosition = (Vector3)worldCoordinates * World.tileSize;
+        Vector3 targetPosition = (Vector3)(worldCoordinates + Vector3.one / 2.0f) * World.tileSize;
         Vector3 position = Vector3.MoveTowards(transform.position, targetPosition, moveDelay);
         transform.position = position;
     }
@@ -59,18 +59,16 @@ public class Pawn : MonoBehaviour
     void Move(Vector3Int displacement)
     {
         Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
-        // TO DO: Check if pawn can move to new location (Wall is present, no floor?)
         Vector3Int targetCoordinates = worldCoordinates + displacement;
         // Restrict to map bounds
         targetCoordinates.x = Mathf.Clamp(targetCoordinates.x, 0, World.instance.mapWidth - 1);
-        targetCoordinates.z = Mathf.Clamp(targetCoordinates.z, 0, World.instance.mapHeight - 1);
-
-        char tile = World.instance.GetTile(targetCoordinates.x, targetCoordinates.z);
+        targetCoordinates.y = Mathf.Clamp(targetCoordinates.y, 0, World.instance.mapHeight - 1);
+        targetCoordinates.z = Mathf.Clamp(targetCoordinates.z, 0, World.instance.mapLength - 1);
 
         // To do: Give tiles flags (IE walkable, solid) instead
-        if (tile == 'X')  // If this tile is walkable
+        // Test whether the coordinates are walkable
+        if (CanStandHere(targetCoordinates))
         {
-            // Move the pawn
             worldCoordinates = targetCoordinates;
         }
     }
@@ -86,16 +84,19 @@ public class Pawn : MonoBehaviour
 
         for (int x = 0; x < World.instance.mapWidth; x++)
         {
-            for (int z = 0; z < World.instance.mapHeight; z++)
+            for (int z = 0; z < World.instance.mapLength; z++)
             {
-                char tile = World.instance.GetTile(x, z);
-                if (tile == 'X')
+                if (CanStandHere(new Vector3Int(x, 1, z)))
                 {
-                    worldCoordinates = new Vector3Int(x, 0, z);
+                    worldCoordinates = new Vector3Int(x, 1, z);
                     return;
                 }
             }
         }
+    }
+    public bool CanStandHere(Vector3Int coord)
+    {
+        return World.instance.GetTile(coord).IsSolid == false && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
     }
     private void OnDrawGizmos()
     {
