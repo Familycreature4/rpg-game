@@ -22,6 +22,7 @@ public class World : MonoBehaviour
             instance = this;
 
         WorldGenerator.GenerateMap(this);
+        MeshGenerator.Generate(this);
     }
     /// <summary>
     /// Returns the tile at coordinates x, y, z
@@ -29,7 +30,10 @@ public class World : MonoBehaviour
     /// <returns></returns>
     public Tile GetTile(int x, int y, int z)
     {
-        // To do: Ensure coordinates are within map range
+        // If coords are beyond range, return air
+        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight || z < 0 || z >= mapLength)
+            return Tile.Air;
+
         return tiles[FlattenIndex(x, y, z)];
     }
     public Tile GetTile(Vector3Int c) => GetTile(c.x, c.y, c.z);

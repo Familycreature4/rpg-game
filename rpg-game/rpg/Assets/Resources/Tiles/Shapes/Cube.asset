@@ -7,10 +7,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d2565e2468de214d9275a9d5c00320b, type: 3}
-  m_Name: Solid
+  m_Script: {fileID: 11500000, guid: f6574e2541391f5419b79e6c734e99d7, type: 3}
+  m_Name: Cube
   m_EditorClassIdentifier: 
-  solid: 1
-  shape: {fileID: 11400000, guid: da9739741ba25164cb46e3bb622d1fdf, type: 2}
+  mesh: {fileID: -5495902117074765545, guid: 4ad941ce104cf3243bd6a7946923dad8, type: 3}
+  vertices: []
+  indices: 

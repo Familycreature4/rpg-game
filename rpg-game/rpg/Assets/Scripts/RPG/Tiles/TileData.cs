@@ -6,4 +6,5 @@ using UnityEngine;
 public class TileData : ScriptableObject
 {
     public bool solid;  // Whether the tile blocks movement, sight
+    public TileShape shape;  // The mesh of the tile
 }

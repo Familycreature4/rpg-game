@@ -9,7 +9,7 @@ public static class WorldGenerator
         Texture2D mapData = Resources.Load<Texture2D>("Map/map");
         world.mapWidth = mapData.width;
         world.mapLength = mapData.height;
-        world.mapHeight = 2;
+        world.mapHeight = 4;
         world.tiles = new Tile[world.mapWidth * world.mapLength * world.mapHeight];
         // Iterate over map data
         // Create a cube if the tile is not empty
@@ -44,7 +44,8 @@ public static class WorldGenerator
                 {
                     // Wall, create tile above and below
                     world.tiles[world.FlattenIndex(x, 0, z)] = new Tile(solidTile);
-                    world.tiles[world.FlattenIndex(x, 1, z)] = new Tile(solidTile);
+                    for (int y = 1; y < world.mapHeight; y++)
+                        world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
                 }
             }
         }

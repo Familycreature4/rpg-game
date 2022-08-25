@@ -16,6 +16,7 @@ public class Pawn : MonoBehaviour
         }
     }
     public Vector3Int worldCoordinates;
+    public Vector3Int size = new Vector3Int(1, 2, 1);  // Size in tiles
     float moveDelay = 0.125f;  // Amount of time in seconds between movements
     float nextMoveTime = 0;
 
@@ -96,11 +97,34 @@ public class Pawn : MonoBehaviour
     }
     public bool CanStandHere(Vector3Int coord)
     {
-        return World.instance.GetTile(coord).IsSolid == false && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
+        return Overlap(coord, size) && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
+    }
+    /// <summary>
+    /// Returns whether a pawn at coords and size can fit here
+    /// </summary>
+    /// <param name="coords"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public bool Overlap(Vector3Int coords, Vector3Int size)
+    {
+        for (int x = -size.x / 2; x < size.x / 2 + 1; x++)
+        {
+            for (int y = 0; y < size.y; y++)
+            {
+                for (int z = -size.z / 2; z < size.z / 2 + 1; z++)
+                {
+                    Vector3Int worldCoord = coords + new Vector3Int(x, y, z);
+                    if (World.instance.GetTile(worldCoord).IsSolid)
+                        return false;
+                }
+            }
+        }
+
+        return true;
     }
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.black;
-        Gizmos.DrawWireCube((Vector3)worldCoordinates * World.tileSize, Vector3.one * World.tileSize);
+        Gizmos.DrawWireCube((Vector3)(worldCoordinates + new Vector3(0.5f, size.y / 2.0f, 0.5f)) * World.tileSize, (Vector3)size * World.tileSize);
     }
 }
