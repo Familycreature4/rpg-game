@@ -38,6 +38,10 @@ public class World : MonoBehaviour
     }
     public Tile GetTile(Vector3Int c) => GetTile(c.x, c.y, c.z);
     public Tile GetTile(int index) => tiles[index];
+    public bool InBounds(Vector3Int coords)
+    {
+        return coords.x >= 0 && coords.x < mapWidth && coords.y >= 0 && coords.y < mapHeight && coords.z >= 0 && coords.z < mapLength;
+    }
     public Vector3Int UnFlattenIndex(int index)
     {
         int y = index / (mapWidth * mapLength);
@@ -49,6 +53,10 @@ public class World : MonoBehaviour
     public int FlattenIndex(int x, int y, int z)
     {
         return (mapWidth * mapLength) * y + z * mapWidth + x;
+    }
+    public static Vector3 WorldCoordToScene(Vector3 world)
+    {
+        return (world + Vector3.one / 2.0f) * World.tileSize;
     }
     private void OnDrawGizmosSelected()
     {

@@ -12,7 +12,6 @@ public class IsoCamera : MonoBehaviour
     private void Awake()
     {
         camera = GetComponent<Camera>();
-        target = GameObject.FindObjectOfType<Pawn>().transform;
     }
 
     private void LateUpdate()

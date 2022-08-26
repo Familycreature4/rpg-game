@@ -15,14 +15,17 @@ public class Pawn : MonoBehaviour
             return Time.time >= nextMoveTime;
         }
     }
-    public Vector3Int worldCoordinates;
-    public Vector3Int size = new Vector3Int(1, 2, 1);  // Size in tiles
+    public TileTransform TileTransform => GetComponent<TileTransform>();
+    public new string name;
+    public string partyName;
     float moveDelay = 0.125f;  // Amount of time in seconds between movements
     float nextMoveTime = 0;
 
     private void Start()
     {
         MoveToWalkableSpace();
+        transform.position = World.WorldCoordToScene(TileTransform.coordinates);
+        Party.AddToParty(partyName, this);
     }
 
     private void Update()
@@ -44,12 +47,11 @@ public class Pawn : MonoBehaviour
             if (move.magnitude > 0)
             {
                 Move(move);
-                nextMoveTime = Time.time + moveDelay;
             }
         }
 
         // Move the gameobject to the world coordinates
-        Vector3 targetPosition = (Vector3)(worldCoordinates + Vector3.one / 2.0f) * World.tileSize;
+        Vector3 targetPosition = (Vector3)(TileTransform.coordinates + Vector3.one / 2.0f) * World.tileSize;
         Vector3 position = Vector3.MoveTowards(transform.position, targetPosition, moveDelay);
         transform.position = position;
     }
@@ -59,8 +61,11 @@ public class Pawn : MonoBehaviour
     /// <param name="displacement">Offset in tiles to displace the pawn by</param>
     void Move(Vector3Int displacement)
     {
+        if (displacement == Vector3Int.zero)
+            return;
+
         Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
-        Vector3Int targetCoordinates = worldCoordinates + displacement;
+        Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
         // Restrict to map bounds
         targetCoordinates.x = Mathf.Clamp(targetCoordinates.x, 0, World.instance.mapWidth - 1);
         targetCoordinates.y = Mathf.Clamp(targetCoordinates.y, 0, World.instance.mapHeight - 1);
@@ -70,7 +75,8 @@ public class Pawn : MonoBehaviour
         // Test whether the coordinates are walkable
         if (CanStandHere(targetCoordinates))
         {
-            worldCoordinates = targetCoordinates;
+            TileTransform.coordinates = targetCoordinates;
+            nextMoveTime = Time.time + moveDelay;
         }
     }
     /// <summary>
@@ -81,50 +87,11 @@ public class Pawn : MonoBehaviour
         if (World.instance.MapReady == false)
             return;
 
-        // To do: Get the closest current tile instead
-
-        for (int x = 0; x < World.instance.mapWidth; x++)
-        {
-            for (int z = 0; z < World.instance.mapLength; z++)
-            {
-                if (CanStandHere(new Vector3Int(x, 1, z)))
-                {
-                    worldCoordinates = new Vector3Int(x, 1, z);
-                    return;
-                }
-            }
-        }
+        if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate(Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
+            TileTransform.coordinates = coords;
     }
     public bool CanStandHere(Vector3Int coord)
     {
-        return Overlap(coord, size) && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
-    }
-    /// <summary>
-    /// Returns whether a pawn at coords and size can fit here
-    /// </summary>
-    /// <param name="coords"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
-    public bool Overlap(Vector3Int coords, Vector3Int size)
-    {
-        for (int x = -size.x / 2; x < size.x / 2 + 1; x++)
-        {
-            for (int y = 0; y < size.y; y++)
-            {
-                for (int z = -size.z / 2; z < size.z / 2 + 1; z++)
-                {
-                    Vector3Int worldCoord = coords + new Vector3Int(x, y, z);
-                    if (World.instance.GetTile(worldCoord).IsSolid)
-                        return false;
-                }
-            }
-        }
-
-        return true;
-    }
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.black;
-        Gizmos.DrawWireCube((Vector3)(worldCoordinates + new Vector3(0.5f, size.y / 2.0f, 0.5f)) * World.tileSize, (Vector3)size * World.tileSize);
+        return TileTools.Overlap(coord, TileTransform.size) && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
     }
 }
