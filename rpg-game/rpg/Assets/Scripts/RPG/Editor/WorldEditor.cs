@@ -2,25 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-
-public class WorldEditor : ScriptableWizard
+namespace RPG
 {
-    [MenuItem("RPG/World Editor")]
-    static void CreateWizard()
+    public class WorldEditor : ScriptableWizard
     {
-        ScriptableWizard.DisplayWizard<WorldEditor>("Create World");
-    }
-
-    private void OnWizardCreate()
-    {
-        if (World.instance == null)
+        [MenuItem("RPG/World Editor")]
+        static void CreateWizard()
         {
-            World.instance = GameObject.FindObjectOfType<World>();
-            if (World.instance == null)
-                World.instance = new GameObject("World").AddComponent<World>();
+            ScriptableWizard.DisplayWizard<WorldEditor>("Create World");
         }
 
-        WorldGenerator.GenerateMap(World.instance);
-        MeshGenerator.Generate(World.instance);
+        private void OnWizardCreate()
+        {
+            if (World.instance == null)
+            {
+                World.instance = GameObject.FindObjectOfType<World>();
+                if (World.instance == null)
+                    World.instance = new GameObject("World").AddComponent<World>();
+            }
+
+            WorldGenerator.GenerateMap(World.instance);
+            MeshGenerator.Generate(World.instance);
+        }
     }
 }

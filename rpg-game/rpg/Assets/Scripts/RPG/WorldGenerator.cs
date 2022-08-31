@@ -1,51 +1,53 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public static class WorldGenerator
+namespace RPG
 {
-    public static void GenerateMap(World world)
+    public static class WorldGenerator
     {
-        Texture2D mapData = Resources.Load<Texture2D>("Map/map");
-        world.mapWidth = mapData.width;
-        world.mapLength = mapData.height;
-        world.mapHeight = 10;
-        world.tiles = new Tile[world.mapWidth * world.mapLength * world.mapHeight];
-        // Iterate over map data
-        // Create a cube if the tile is not empty
-
-        // To do: Generate a mesh instead of creating gameobjects for every tile => Very inefficient
-
-        TileData solidTile = Resources.Load<TileData>("Tiles/Solid");
-        
-        for (int i = 0; i < world.mapVolume; i++)
+        public static void GenerateMap(World world)
         {
-            world.tiles[i] = Tile.Air;
-        }
+            Texture2D mapData = Resources.Load<Texture2D>($"Map/{world.mapName}");
+            world.mapWidth = mapData.width;
+            world.mapLength = mapData.height;
+            world.mapHeight = 10;
+            world.tiles = new Tile[world.mapWidth * world.mapLength * world.mapHeight];
+            // Iterate over map data
+            // Create a cube if the tile is not empty
 
+            // To do: Generate a mesh instead of creating gameobjects for every tile => Very inefficient
 
-        for (int x = 0; x < world.mapWidth; x++)
-        {
-            for (int z = 0; z < world.mapLength; z++)
+            TileData solidTile = Resources.Load<TileData>("Tiles/Solid");
+
+            for (int i = 0; i < world.mapVolume; i++)
             {
-                // Sample image
-                Color32 color = mapData.GetPixel(x, z);
+                world.tiles[i] = Tile.Air;
+            }
 
-                if (color.r == 0)
+
+            for (int x = 0; x < world.mapWidth; x++)
+            {
+                for (int z = 0; z < world.mapLength; z++)
                 {
-                    // Empty, do nothing
-                }
-                else if (color.r == 145)
-                {
-                    // Path, create tile below
-                    for (int y = 4; y >= 0; y--)
-                        world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
-                }
-                else if (color.r == 255)
-                {
-                    // Wall, create tile above and below
-                    for (int y = 0; y < world.mapHeight; y++)
-                        world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
+                    // Sample image
+                    Color32 color = mapData.GetPixel(x, z);
+
+                    if (color.r == 0)
+                    {
+                        // Empty, do nothing
+                    }
+                    else if (color.r == 145)
+                    {
+                        // Path, create tile below
+                        for (int y = 4; y >= 0; y--)
+                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
+                    }
+                    else if (color.r == 255)
+                    {
+                        // Wall, create tile above and below
+                        for (int y = 0; y < world.mapHeight; y++)
+                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
+                    }
                 }
             }
         }
