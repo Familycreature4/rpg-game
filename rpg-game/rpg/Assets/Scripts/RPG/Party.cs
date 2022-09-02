@@ -45,6 +45,11 @@ namespace RPG
             new Vector3Int(1, 0, -2),
         };
         public float formationRotation = 0.0f;  // Rotates party around leader
+        /// <summary>
+        /// Converts a coordinate in local party space to world space
+        /// </summary>
+        /// <param name="local"></param>
+        /// <returns></returns>
         public Vector3Int TransformFormationPosition(Vector3Int local)
         {
             Vector3 pos = Quaternion.AngleAxis(Mathf.Round(formationRotation / 90.0f) * 90.0f, Vector3.up) * local;
