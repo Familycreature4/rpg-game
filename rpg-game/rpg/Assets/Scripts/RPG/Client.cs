@@ -24,6 +24,7 @@ public class Client : MonoBehaviour
     }
     private void Update()
     {
+        #region PAWNS/PARTY
         if (party == null)
         {
             party = Party.GetParty("0");
@@ -51,9 +52,36 @@ public class Client : MonoBehaviour
 
         Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.formationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
         party.Move(formationMove);
-        
-    }
+        #endregion
 
+        #region CAMERA
+        IsoCamera.Current.distance -= Input.GetAxisRaw("Mouse ScrollWheel") * 4.0f;
+        if (Input.GetMouseButton(1))
+        {
+            IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
+            IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
+            IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
+        }
+        #endregion
+    }
+    /// <summary>
+    /// Returns the pawn beneath the cursor (If any exist)
+    /// </summary>
+    /// <returns></returns>
+    public Pawn GetSelection()
+    {
+        Ray ray = IsoCamera.Current.camera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 100, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        {
+            Pawn pawn = null;
+            if (hit.collider.gameObject.TryGetComponent<Pawn>(out pawn))
+            {
+                return pawn;
+            }
+        }
+
+        return null;
+    }
     private void OnDrawGizmos()
     {
         if (party == null)

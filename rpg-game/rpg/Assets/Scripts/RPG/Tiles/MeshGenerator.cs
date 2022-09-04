@@ -23,7 +23,6 @@ namespace RPG
 
             List<Vector3> vertices = new List<Vector3>();
             List<int> indices = new List<int>();
-            int indexOffset = 0;
 
             void AddTriangles(List<int> otherIndices, List<Vector3> otherVertices, Vector3 offset)
             {
@@ -64,6 +63,9 @@ namespace RPG
                 }
             }
 
+            // Mesh has been created
+            // Apply to gameobject
+
             MeshFilter filter;
             if (world.gameObject.TryGetComponent<MeshFilter>(out filter) == false)
             {
@@ -77,6 +79,12 @@ namespace RPG
                 renderer.sharedMaterial = Resources.Load<Material>("Wall");
             }
 
+            MeshCollider collider;
+            if (world.gameObject.TryGetComponent<MeshCollider>(out collider) == false)
+            {
+                collider = world.gameObject.AddComponent<MeshCollider>();
+            }
+
             Mesh mesh = new Mesh();
             mesh.indexFormat = indices.Count >= 32684 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
             mesh.SetVertices(vertices);
@@ -85,6 +93,7 @@ namespace RPG
             mesh.RecalculateNormals();
 
             filter.sharedMesh = mesh;
+            collider.sharedMesh = mesh;
         }
     }
 }

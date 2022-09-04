@@ -28,14 +28,23 @@ namespace RPG
         }
         private void Update()
         {
+            // Temporary driving code to initiate a battle
+            if (Party.GetParty("0") != null && Party.GetParty("1") != null && activeBattle == null)
+            {
+                InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
+            }
+
             // 
             if (state == State.Combat)
             {
                 
             }
+
+            activeBattle?.Update();
         }
         public void InitiateBattle(params Party[] parties)
         {
+            Debug.Log("Initiating Battle");
             activeBattle = new Battle(parties);
             state = State.Combat;
 

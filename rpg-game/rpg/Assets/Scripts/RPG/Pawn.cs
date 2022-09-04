@@ -47,32 +47,36 @@ namespace RPG
             if (party != null)
             {
                 int index = party.pawns.IndexOf(this);
-                if (index != 0)
+                Vector3Int targetPosition = party.TransformFormationPosition(party.formationLocalPositions[index]);
+                bool inFormation = Coordinates == targetPosition;
+                bool isLeader = index == 0;
+
+                // Leader is manually controlled
+                // Have non-leader pawns path to formation position    
+                if (isLeader == false && inFormation == false)
                 {
-                    // Leader is manually controlled
-                    // Have pawn path to formation position
-                    Vector3Int targetPosition = party.TransformFormationPosition(party.formationLocalPositions[index]);
-
-                    if (Coordinates != targetPosition)
+                    List<Vector3Int> path = new List<Vector3Int>();
+                    if (TileTools.GetPath(Coordinates, targetPosition, null, out path))
                     {
-                        List<Vector3Int> path = new List<Vector3Int>();
-                        if (TileTools.GetPath(Coordinates, targetPosition, null, out path))
-                        {
-                            Vector3Int targetPos = path[0];
-                            if (path.Count > 1)
-                                targetPos = path[1];
-                            Move(targetPos - Coordinates);
+                        Vector3Int targetPos = path[0];
+                        if (path.Count > 1)
+                            targetPos = path[1];
+                        Move(targetPos - Coordinates);
 
-                            for (int a = 0; a < path.Count - 1; a++)
-                            {
-                                Debug.DrawLine(path[a] + Vector3.one / 2, path[a + 1] + Vector3.one / 2, Color.white);
-                            }
-                            for (int a = 0; a < path.Count; a++)
-                            {
-                                Debug.DrawRay(path[a] + Vector3.one / 2, Vector3.up, Color.red);
-                            }
+                        for (int a = 0; a < path.Count - 1; a++)
+                        {
+                            Debug.DrawLine(path[a] + Vector3.one / 2, path[a + 1] + Vector3.one / 2, Color.white);
+                        }
+                        for (int a = 0; a < path.Count; a++)
+                        {
+                            Debug.DrawRay(path[a] + Vector3.one / 2, Vector3.up, Color.red);
                         }
                     }
+                }
+
+                if (isLeader || inFormation)
+                {
+                    this.transform.rotation = Quaternion.AngleAxis(party.formationRotation + 180.0f, Vector3.up);
                 }
             }
             // Move the gameobject to the world coordinates
@@ -93,16 +97,16 @@ namespace RPG
                 return;
 
             // Prevent diagonal movements
-            for (int i = 0; i < 3; i++)
-            {
-                if (displacement[i] != 0)
-                {
-                    // Get the other two indices/Components
-                    displacement[(i + 2) % 3] = 0;
-                    displacement[(i + 1) % 3] = 0;
-                    break;
-                }
-            }
+            //for (int i = 0; i < 3; i++)
+            //{
+            //    if (displacement[i] != 0)
+            //    {
+            //        // Get the other two indices/Components
+            //        displacement[(i + 2) % 3] = 0;
+            //        displacement[(i + 1) % 3] = 0;
+            //        break;
+            //    }
+            //}
 
             Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
             Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
@@ -115,6 +119,7 @@ namespace RPG
             // Test whether the coordinates are walkable
             if (CanStandHere(targetCoordinates))
             {
+                this.transform.rotation = Quaternion.LookRotation(-displacement);
                 TileTransform.coordinates = targetCoordinates;
                 nextMoveTime = Time.time + moveDelay;
             }
@@ -129,6 +134,10 @@ namespace RPG
 
             if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate (Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
                 TileTransform.coordinates = coords;
+        }
+        public void TakeDamage()
+        {
+            Debug.Log($"Pawn {name} of {partyName} has been hurt!");
         }
         public bool CanStandHere(Vector3Int coord)
         {
