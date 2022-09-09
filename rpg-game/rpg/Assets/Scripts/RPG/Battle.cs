@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 namespace RPG
 {
     /// <summary>
@@ -10,111 +11,43 @@ namespace RPG
     {
         public enum State
         {
-            Planning,
+            Waiting,
             Attacking
         }
         public Battle(params Party[] parties)
         {
-            foreach (Party p in parties)
+            this.parties = new BattleParty[parties.Length];
+            for (int i = 0; i < parties.Length; i++)
             {
-                Debug.Log($"{p.pawns.Count}");
+                Party party = parties[i];
+                BattleParty battleParty;
+                if (party.IsClient)
+                    battleParty = new ClientBattle(party, this);
+                else
+                    battleParty = new BotBattle(parties[i], this);
+
+                this.parties[i] = battleParty;
             }
-            this.parties = parties;
         }
-        public Party ActiveParty => parties[activePartyIndex];
-        public Pawn ActivePawn => ActiveParty.pawns[activePawnIndex];
-        Party[] parties;
+        public BattleParty ActiveParty => parties[activePartyIndex];
+        public Pawn ActivePawn => ActiveParty.party.pawns[activePawnIndex];
+        public BattleParty[] parties;
         int activePartyIndex;
         int activePawnIndex;
         public State state;
-        List<AttackInfo> attacks = new List<AttackInfo>();
-        Pawn attackerPawnSelection = null;
-        Pawn targetPawnSelection = null;
-        float botThinkTime = 1.0f;
-        float nextBotThinkTime = 0;
+        public Action<BattleParty> OnPartyTurn;  // Invoked when the active party is active
+        public Action<BattleParty> OnPartyAttack;  // Invoked when the active party begins attack / Ends planning
         public void Update()
         {
-            foreach (AttackInfo attack in attacks)
-            {
-                Debug.DrawLine(attack.attacker.transform.position, attack.target.transform.position);
-            }
-            if (ActiveParty == Client.Current.party)
-            {
-                // Allow manual definition of attacks
-                // Await for attack
-                if (Input.GetMouseButtonDown(0))
-                {
-                    Pawn selectedPawn = Client.Current.GetSelection();
-                    if (selectedPawn)
-                    {
-                        bool isEnemy = selectedPawn.party != ActiveParty;
-                        if (isEnemy)
-                            targetPawnSelection = selectedPawn;
-                        else
-                            attackerPawnSelection = selectedPawn;
-                    }
-                }
-
-                if (targetPawnSelection != null && attackerPawnSelection != null)
-                {
-                    // Create attack info
-                    // Check if an existing attackInfo exists for attacker
-                    for (int i = 0; i < attacks.Count; i++)
-                    {
-                        AttackInfo attackInfo = attacks[i];
-                        if (attackInfo.attacker == attackerPawnSelection)
-                        {
-                            // Update this
-                            attacks[i] = new AttackInfo { attacker = attackerPawnSelection, target = targetPawnSelection };
-                            targetPawnSelection = null;
-                            attackerPawnSelection = null;
-                            return;
-                        }
-                    }
-
-                    // If control reaches here, create new attack info
-                    attacks.Add(new AttackInfo { attacker = attackerPawnSelection, target = targetPawnSelection });
-                    targetPawnSelection = null;
-                    attackerPawnSelection = null;
-                }
-
-                if (CanExecute() && Input.GetKeyDown(KeyCode.Space))
-                {
-                    DoAttack();
-                    NextTurn();
-                }
-            }
-            else
-            {
-                // Define attacks for bot
-                if (attacks.Count == 0)
-                {
-                    for (int i = 0; i < ActiveParty.pawns.Count; i++)
-                    {
-                        attacks.Add(new AttackInfo { attacker = ActiveParty.pawns[i], target = GetRandomEnemyPawn(ActiveParty) });
-                    }
-
-                    nextBotThinkTime = Time.time + botThinkTime;
-                }
-
-                if (Time.time >= nextBotThinkTime)
-                {
-                    DoAttack();
-                    NextTurn();
-                }
-            }
+            ActiveParty.TurnThink();
         }
-        Pawn GetRandomEnemyPawn(Party myParty)
+        /// <summary>
+        /// Submits a party's attacks and executes them
+        /// </summary>
+        public void PartyAttack()
         {
-            foreach (Party p in parties)
-            {
-                if (p == myParty)
-                    continue;
-
-                return p.pawns[Random.Range(0, p.pawns.Count)];
-            }
-
-            return null;
+            OnPartyAttack?.Invoke(ActiveParty);
+            NextTurn();
         }
         /// <summary>
         /// Gives control to the next party
@@ -125,30 +58,123 @@ namespace RPG
             if (activePartyIndex >= parties.Length)
                 activePartyIndex = 0;
 
-            attacks.Clear();
+            OnPartyTurn?.Invoke(ActiveParty);
             Debug.Log($"It is now {ActiveParty}'s turn");
-        }
-        /// <summary>
-        /// Executes attacks
-        /// </summary>
-        void DoAttack()
-        {
-            foreach (AttackInfo attack in attacks)
-            {
-                attack.target.TakeDamage();
-            }
-        }
-        bool CanExecute()
-        {
-            return attacks.Count == ActiveParty.pawns.Count;
         }
         /// <summary>
         /// Data describing which pawn will attack who with what
         /// </summary>
         public struct AttackInfo
         {
+            public AttackInfo(Pawn attacker, Pawn target)
+            {
+                this.attacker = attacker;
+                this.target = target;
+            }
             public Pawn attacker;
             public Pawn target;
+        }
+        /// <summary>
+        /// Encapsulates party state in a battle
+        /// </summary>
+        public class BattleParty
+        {
+            public bool MyTurn => battle.ActiveParty == this;
+            public BattleParty(Party party, Battle battle)
+            {
+                this.party = party;
+                this.battle = battle;
+            }
+            protected Battle battle;
+            public readonly Party party;
+            protected Dictionary<Pawn, AttackInfo> attacks = new Dictionary<Pawn, AttackInfo>();
+            public void ExecuteAttacks()
+            {
+                battle.PartyAttack();
+            }
+            /// <summary>
+            /// Called when it is the party's turn. Gives control to next party
+            /// </summary>
+            public virtual void TurnThink()
+            {
+                attacks.Clear();
+
+                foreach (Pawn pawn in party.pawns)
+                {
+                    attacks.Add(pawn, new AttackInfo(pawn, GetEnemyParty().GetRandomPawn()));
+                }
+
+                ExecuteAttacks();
+            }
+            protected BattleParty GetEnemyParty()
+            {
+                foreach (BattleParty battleParty in battle.parties)
+                {
+                    if (battleParty != this)
+                        return battleParty;
+                }
+
+                return null;
+            }
+            public Pawn GetRandomPawn()
+            {
+                return party.pawns[UnityEngine.Random.Range(0, party.pawns.Count)];
+            }
+        }
+        /// <summary>
+        /// BattleParty whose attacks are made by the client
+        /// </summary>
+        public class ClientBattle : BattleParty
+        {
+            public ClientBattle(Party p, Battle b) : base(p, b)
+            {
+                
+            }
+            public override void TurnThink()
+            {
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    attacks.Clear();
+
+                    foreach (Pawn pawn in party.pawns)
+                    {
+                        attacks.Add(pawn, new AttackInfo(pawn, GetEnemyParty().GetRandomPawn()));
+                    }
+
+                    ExecuteAttacks();
+                }
+            }
+        }
+        public class BotBattle : BattleParty
+        {
+            public BotBattle(Party p, Battle b) : base(p, b)
+            {
+                Director.Current.OnBattlePartyTurn += OnPartyTurn;
+            }
+            bool CanAttack => Time.time >= nextAttackTime;
+            float nextAttackTime = 0.0f;
+            float attackDelay = 1.0f;
+            public override void TurnThink()
+            {
+                if (CanAttack)
+                {
+                    nextAttackTime = Time.time + attackDelay;
+
+                    attacks.Clear();
+
+                    foreach (Pawn pawn in party.pawns)
+                    {
+                        attacks.Add(pawn, new AttackInfo(pawn, GetEnemyParty().GetRandomPawn()));
+                    }
+
+                    ExecuteAttacks();
+                }
+            }
+            void OnPartyTurn(BattleParty battleParty)
+            {
+                if (battleParty == this)
+                    nextAttackTime = Time.time + attackDelay;
+            }
         }
     }
 }

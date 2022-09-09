@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System;
 namespace RPG
 {
     /// <summary>
@@ -21,6 +21,9 @@ namespace RPG
         static Director instance;
         public State state = State.Peace;
         public Battle activeBattle;
+        public Action<Battle> OnBattleStart;
+        public Action<Battle.BattleParty> OnBattlePartyTurn;
+        public Action<Battle.BattleParty> OnBattlePartyAttack;
         private void Awake()
         {
             if (instance == null)
@@ -28,16 +31,9 @@ namespace RPG
         }
         private void Update()
         {
-            // Temporary driving code to initiate a battle
-            if (Party.GetParty("0") != null && Party.GetParty("1") != null && activeBattle == null)
+            foreach (KeyValuePair<string, Party> pair in Party.parties)
             {
-                InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
-            }
-
-            // 
-            if (state == State.Combat)
-            {
-                
+                pair.Value.Update();
             }
 
             activeBattle?.Update();
@@ -47,6 +43,12 @@ namespace RPG
             Debug.Log("Initiating Battle");
             activeBattle = new Battle(parties);
             state = State.Combat;
+
+            // Subscribe the director events to the battle
+            activeBattle.OnPartyAttack += OnBattlePartyAttack;
+            activeBattle.OnPartyTurn += OnBattlePartyTurn;
+
+            OnBattleStart?.Invoke(activeBattle);
 
             //// Set ui stuff
             //foreach (UI.Party partyCanvas in GameObject.FindObjectsOfType<UI.Party>())
@@ -59,6 +61,13 @@ namespace RPG
             //    UI.Party partyCanvas = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party Canvas Prefab")).GetComponent<UI.Party>();
             //    partyCanvas.SetParty(party);
             //}
+        }
+
+        public void EndBattle()
+        {
+            state = State.Peace;
+            activeBattle.OnPartyAttack -= OnBattlePartyAttack;
+            activeBattle.OnPartyTurn -= OnBattlePartyTurn;
         }
     }
 }

@@ -14,6 +14,11 @@ namespace RPG
             );
             size = t.size;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="coords">The bottom CENTER of the bounds</param>
+        /// <param name="size"></param>
         public Bounds(Vector3Int coords, Vector3Int size)
         {
             mins = new Vector3Int(

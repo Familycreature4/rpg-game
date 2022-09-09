@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace RPG
 {
-    public class Tile
+    public struct Tile
     {
-        public readonly static Tile Air = new Tile { data = null };
+        public readonly static Tile Air = new Tile {  };
         public static Vector3Int[] neighbors =
         {
         new Vector3Int(0, 0, 1),
@@ -15,17 +15,15 @@ namespace RPG
         new Vector3Int(0, 1, 0),
         new Vector3Int(0, -1, 0),
     };
-        public Tile(TileData data)
+        public Tile(string mat)
         {
-            this.data = data;
+            shape = TileShape.GetShape("Cube");
+            material = TileMaterial.GetMaterial(mat);
+            rotation = Quaternion.identity;
         }
-        public Tile()
-        {
-
-        }
-        public bool IsSolid => data == null ? false : data.solid;
-        public TileShape Shape => data == null ? null : data.shape;
-        public TileData data;
+        public bool IsSolid => material != null && shape != null;
+        public TileShape shape;
+        public TileMaterial material;
         public Quaternion rotation;  // The orientation of this tile
     }
 }

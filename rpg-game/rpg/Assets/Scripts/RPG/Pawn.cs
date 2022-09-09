@@ -56,7 +56,7 @@ namespace RPG
                 if (isLeader == false && inFormation == false)
                 {
                     List<Vector3Int> path = new List<Vector3Int>();
-                    if (TileTools.GetPath(Coordinates, targetPosition, null, out path))
+                    if (TileTools.GetPath(Coordinates, targetPosition, delegate(Vector3Int c) { return this.CanStandHere(c); }, out path, (int)Vector3.Distance(Coordinates, targetPosition) * 10 + 10))
                     {
                         Vector3Int targetPos = path[0];
                         if (path.Count > 1)
@@ -141,7 +141,30 @@ namespace RPG
         }
         public bool CanStandHere(Vector3Int coord)
         {
-            return TileTools.IsWalkable(coord, TileTransform.size);
+            if (World.Current.IsSolid(coord + Vector3Int.down) == false)
+                return false;
+
+            foreach (Vector3Int c in new Bounds(coord, TileTransform.size).AllCoords())
+            {
+                if (World.Current.IsSolid(c))
+                    return false;
+
+                if (TileTools.TryGetTileTransform(c, out TileTransform t) && t != TileTransform)
+                {
+                    if (t.TryGetComponent<Pawn>(out Pawn p))
+                    {
+                        if (party != null && party.Contains(p) == false)
+                            return false;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+            }
+
+            return true;
         }
     }
 }

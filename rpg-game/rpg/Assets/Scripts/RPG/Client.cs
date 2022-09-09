@@ -11,6 +11,7 @@ public class Client : MonoBehaviour
     public static Client Current => instance;
     static Client instance;
     public Party party;
+    BoundsInt lastCameraBounds;
     private void Awake()
     {
         if (instance != null)
@@ -63,24 +64,24 @@ public class Client : MonoBehaviour
             IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
         }
         #endregion
-    }
-    /// <summary>
-    /// Returns the pawn beneath the cursor (If any exist)
-    /// </summary>
-    /// <returns></returns>
-    public Pawn GetSelection()
-    {
-        Ray ray = IsoCamera.Current.camera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 100, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+
+        if (Input.GetKeyDown(KeyCode.Space) && Director.Current.activeBattle == null)
         {
-            Pawn pawn = null;
-            if (hit.collider.gameObject.TryGetComponent<Pawn>(out pawn))
-            {
-                return pawn;
-            }
+            Director.Current.InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
         }
 
-        return null;
+        //UnityEngine.Bounds bounds = new UnityEngine.Bounds(party.GetCenter(), new Vector3(1, 1, 1));
+        //bounds.Encapsulate(IsoCamera.Current.transform.position + Vector3.up * 4.0f);
+        //BoundsInt intBounds = new BoundsInt((int)bounds.min.x, (int)bounds.min.y, (int)bounds.min.z, (int)bounds.size.x, (int)bounds.size.y, (int)bounds.size.z);
+        //if (intBounds.min != lastCameraBounds.min || intBounds.max != lastCameraBounds.max)
+        //{
+        //    lastCameraBounds = intBounds;
+        //    List<BoundsInt> listBounds = new List<BoundsInt>();
+        //    listBounds.Add(intBounds);
+        //    MeshGenerator.Generate(World.Current, listBounds);
+        //}
+
+        //DebugDraw.DrawCube(intBounds.center, intBounds.size, Color.white);
     }
     private void OnDrawGizmos()
     {
@@ -90,6 +91,13 @@ public class Client : MonoBehaviour
         foreach (Vector3Int local in party.formationLocalPositions)
         {
             Gizmos.DrawCube(World.WorldCoordToScene(party.TransformFormationPosition(local) + Vector3.one / 2.0f), new Vector3(1, 1, 1));
+        }
+    }
+    void OnObjectSelected(GameObject ob)
+    {
+        if (ob.TryGetComponent<Pawn>(out Pawn pawn))
+        {
+            Debug.Log(pawn.name);
         }
     }
 }

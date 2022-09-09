@@ -25,7 +25,7 @@ namespace RPG
         new Vector3Int(-1, -1, 0), new Vector3Int(0, -1, 0), new Vector3Int(1, -1, 0),
         new Vector3Int(-1, -1, -1), new Vector3Int(0, -1, -1), new Vector3Int(1, -1, -1),
         };
-        public static bool GetPath(Vector3Int start, Vector3Int end, System.Func<Vector3Int, bool> walkableFunction, out List<Vector3Int> path)
+        public static bool GetPath(Vector3Int start, Vector3Int end, System.Func<Vector3Int, bool> walkableFunction, out List<Vector3Int> path, int maxIterations = -1)
         {
             int GetHCost(Vector3Int start, Vector3Int end)
             {
@@ -47,14 +47,15 @@ namespace RPG
             {
                 walkableFunction = delegate (Vector3Int coord)
                 {
-                    return World.instance.GetTile(coord).IsSolid == false && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
+                    return World.instance.IsSolid(coord) == false && World.instance.IsSolid(coord + Vector3Int.down);
                 };
             }
 
             openTiles.Add(new ATile { gCost = 0, coords = start, hCost = GetHCost(start, end) });
             tiles.Add(start, openTiles[0]);
 
-            int maxIterations = 100 * GetHCost(start, end);
+            if (maxIterations == -1)
+                maxIterations = 100 * GetHCost(start, end);
             int iteration = 0;
 
             while (openTiles.Count > 0 && iteration < maxIterations)
@@ -175,7 +176,7 @@ namespace RPG
             {
                 foreach (Vector3Int c in bounds.AllCoords())
                 {
-                    if (World.instance.GetTile(c).IsSolid)
+                    if (World.instance.IsSolid(c))
                         return false;
                 }
             }
@@ -197,7 +198,7 @@ namespace RPG
         }
         public static bool IsWalkable(Vector3Int coord, Vector3Int size, CastFilter filter = CastFilter.World)
         {
-            return Overlap(coord, size, filter) && World.instance.GetTile(coord + Vector3Int.down).IsSolid;
+            return Overlap(coord, size, filter) && World.instance.IsSolid(coord + Vector3Int.down);
         }
         public static bool TryGetTileTransform(Vector3Int coords, out TileTransform t)
         {
@@ -256,8 +257,8 @@ namespace RPG
 
             Vector3Int endCoords = Vector3Int.FloorToInt(end);
             Vector3Int currentCoords = Vector3Int.FloorToInt(start);
-            bool startSolid = World.Current.GetTile(currentCoords).IsSolid;
-            bool endSolid = World.Current.GetTile(endCoords).IsSolid;
+            bool startSolid = World.Current.IsSolid(currentCoords);
+            bool endSolid = World.Current.IsSolid(endCoords);
 
             // Set up initial projectedLength settings
             for (int i = 0; i < 3; i++)
@@ -280,7 +281,7 @@ namespace RPG
                 Tile tile = World.Current.GetTile(currentCoords);
                 TryGetTileTransform(currentCoords, out TileTransform tileTransform);
 
-                if ((hits.Count == 0 && (tile != null || tileTransform != null)) || ((hits[hits.Count - 1].tile.IsSolid) != (tile.IsSolid)) || (hits[hits.Count - 1].transform != tileTransform))
+                if ((hits.Count == 0 && (tile.IsSolid || tileTransform != null)) || ((hits[hits.Count - 1].tile.IsSolid) != (tile.IsSolid == false)) || (hits[hits.Count - 1].transform != tileTransform))
                 {
                     hits.Add(new TileHit
                     {

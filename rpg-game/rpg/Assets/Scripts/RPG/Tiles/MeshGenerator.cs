@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 namespace RPG
 {
     /// <summary>
@@ -8,29 +9,46 @@ namespace RPG
     /// </summary>
     public static class MeshGenerator
     {
-        static MeshGenerator()
+        static VertexAttributeDescriptor[] attributes = new VertexAttributeDescriptor[]
         {
-            foreach (TileShape shape in Resources.LoadAll<TileShape>("Tiles/Shapes"))
-            {
-                shape.Init();
-            }
-        }
-        public static void Generate(World world)
+            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0),
+            new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3, 0),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, 0),
+        };
+
+        public static void Generate(World world, List<BoundsInt> nodraws = null)
         {
             // Foreach tile's neighbors
             // If neighbor is NOT blocking current tile face
             // Create face
 
-            List<Vector3> vertices = new List<Vector3>();
+            List<Vertex> vertices = new List<Vertex>();
             List<int> indices = new List<int>();
 
-            void AddTriangles(List<int> otherIndices, List<Vector3> otherVertices, Vector3 offset)
+            void AddTriangles(List<int> otherIndices, List<Vertex> otherVertices, Vector3 offset)
             {
-                foreach (Vector3 vertex in otherVertices)
+                foreach (Vertex vertex in otherVertices)
                 {
                     indices.Add(vertices.Count);
-                    vertices.Add((vertex + offset) * World.tileSize);
+                    Vertex newVertex = vertex;
+                    newVertex.position = (vertex.position + offset) * World.tileSize;
+                    vertices.Add(newVertex);
                 }
+            }
+
+            bool IsNodraw(Vector3Int c)
+            {
+                // Check if it does not lie inside a nodraw bounds
+                if (nodraws != null)
+                {
+                    foreach (BoundsInt nodraw in nodraws)
+                    {
+                        if (nodraw.Contains(c))
+                            return true;
+                    }
+                }
+
+                return false;
             }
 
             for (int i = 0; i < world.mapVolume; i++)
@@ -39,8 +57,8 @@ namespace RPG
                 // Get tile
                 Tile tile = world.GetTile(tileCoords);
 
-                TileShape shape = tile.Shape;
-                if (shape != null)  // If this tile has a mesh to insert
+                TileShape shape = tile.shape;
+                if (shape != null && IsNodraw(tileCoords) == false)  // If this tile has a mesh to insert
                 {
                     // Insert mesh
                     Vector3 vertexOffset = (Vector3)tileCoords;
@@ -51,9 +69,7 @@ namespace RPG
                         // Get neighbor tile
                         Vector3Int direction = Tile.neighbors[d];
                         Vector3Int neighborCoords = tileCoords + direction;
-                        Tile neighborTile = world.GetTile(neighborCoords);
-
-                        if (neighborTile.IsSolid == false)  // If the neighbor is NOT solid
+                        if (world.IsSolid(neighborCoords) == false || IsNodraw(neighborCoords))  // If the neighbor is NOT solid
                         {
                             // Insert the triangles on this face
                             AddTriangles(shape.faces[d].indices, shape.faces[d].vertices, vertexOffset);
@@ -76,7 +92,7 @@ namespace RPG
             if (world.gameObject.TryGetComponent<MeshRenderer>(out renderer) == false)
             {
                 renderer = world.gameObject.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = Resources.Load<Material>("Wall");
+                renderer.sharedMaterial = Resources.Load<Material>("Materials/Old Brick");
             }
 
             MeshCollider collider;
@@ -87,13 +103,24 @@ namespace RPG
 
             Mesh mesh = new Mesh();
             mesh.indexFormat = indices.Count >= 32684 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
-            mesh.SetVertices(vertices);
-            mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+            mesh.SetVertexBufferParams(vertices.Count, attributes);
+            mesh.SetVertexBufferData<Vertex>(vertices, 0, 0, vertices.Count);
+            mesh.SetIndexBufferParams(indices.Count, mesh.indexFormat);
+            mesh.SetIndexBufferData(indices, 0, 0, indices.Count);
+            mesh.SetSubMesh(0, new SubMeshDescriptor { baseVertex = 0, firstVertex = 0, indexCount = indices.Count, vertexCount = vertices.Count });
+
             mesh.RecalculateBounds();
             mesh.RecalculateNormals();
 
             filter.sharedMesh = mesh;
             collider.sharedMesh = mesh;
+        }
+
+        public struct Vertex
+        {
+            public Vector3 position;
+            public Vector3 normal;
+            public Vector2 uv;
         }
     }
 }

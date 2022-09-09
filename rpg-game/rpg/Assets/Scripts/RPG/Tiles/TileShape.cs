@@ -9,9 +9,22 @@ namespace RPG
     [CreateAssetMenu(fileName = "Tile Shape", menuName = "RPG/Tile Shape")]
     public class TileShape : ScriptableObject
     {
+        static Dictionary<string, TileShape> shapes;
+        public static void BuildShapes()
+        {
+            shapes = new Dictionary<string, TileShape>();
+
+            foreach (TileShape shape in Resources.LoadAll<TileShape>("Tiles/Shapes"))
+            {
+                shapes.Add(shape.name, shape);
+                shape.Init();
+            }
+        }
+        public static TileShape GetShape(string name) => shapes[name];
+
         public Mesh mesh;
         [HideInInspector]
-        public List<Vector3> vertices;
+        public List<MeshGenerator.Vertex> vertices;
         [HideInInspector]
         public List<int> indices;  // Triangles that do not belong to a face (are not coplanar to any face)
         [HideInInspector]
@@ -28,10 +41,12 @@ namespace RPG
             new Face(Vector3.up, 1),        // Up
             new Face(Vector3.down, 0),      // Down
             };
-            vertices = new List<Vector3>();
+            vertices = new List<MeshGenerator.Vertex>();
             indices = new List<int>();
 
             Vector3[] meshVertices = mesh.vertices;
+            Vector2[] uvs = mesh.uv;
+            Vector3[] normals = mesh.normals;
 
             for (int t = 0; t < (mesh.triangles.Length / 3); t++)
             {
@@ -49,7 +64,7 @@ namespace RPG
 
                 // Decide which list of indices to assign this triangle to
                 List<int> activeIndices = indices;
-                List<Vector3> activeVertices = vertices;
+                List<MeshGenerator.Vertex> activeVertices = vertices;
 
                 for (int d = 0; d < 6; d++)
                 {
@@ -71,11 +86,9 @@ namespace RPG
                 activeIndices.Add(t1);
                 activeIndices.Add(t2);
 
-                activeVertices.Add(v1);
-                activeVertices.Add(v2);
-                activeVertices.Add(v3);
-
-
+                activeVertices.Add(new MeshGenerator.Vertex { position = v1, normal = normals[t0], uv = uvs[t0] });
+                activeVertices.Add(new MeshGenerator.Vertex { position = v2, normal = normals[t1], uv = uvs[t1] });
+                activeVertices.Add(new MeshGenerator.Vertex { position = v3, normal = normals[t2], uv = uvs[t2] });
             }
         }
         public class Face
@@ -83,12 +96,12 @@ namespace RPG
             public Face(Vector3 normal, float distance)
             {
                 indices = new List<int>();
-                vertices = new List<Vector3>();
+                vertices = new List<MeshGenerator.Vertex>();
                 plane = new Plane(normal, distance);
             }
 
             public List<int> indices;  // Triangles which are coplanar to this face
-            public List<Vector3> vertices;
+            public List<MeshGenerator.Vertex> vertices;
             Plane plane;
 
             public bool IsCoplanar(Plane plane)

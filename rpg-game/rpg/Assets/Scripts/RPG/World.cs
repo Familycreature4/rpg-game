@@ -24,6 +24,9 @@ namespace RPG
             if (instance == null)
                 instance = this;
 
+            TileShape.BuildShapes();
+            TileMaterial.BuildMaterials();
+
             WorldGenerator.GenerateMap(this);
             MeshGenerator.Generate(this);
         }
@@ -44,6 +47,11 @@ namespace RPG
         public bool InBounds(Vector3Int coords)
         {
             return coords.x >= 0 && coords.x < mapWidth && coords.y >= 0 && coords.y < mapHeight && coords.z >= 0 && coords.z < mapLength;
+        }
+        public bool IsSolid(Vector3Int coords)
+        {
+            Tile tile = GetTile(coords);
+            return tile.IsSolid;
         }
         public Vector3Int UnFlattenIndex(int index)
         {

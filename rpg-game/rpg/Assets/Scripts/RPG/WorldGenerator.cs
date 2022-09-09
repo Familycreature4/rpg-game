@@ -40,13 +40,13 @@ namespace RPG
                     {
                         // Path, create tile below
                         for (int y = 4; y >= 0; y--)
-                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
+                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Clay");
                     }
                     else if (color.r == 255)
                     {
                         // Wall, create tile above and below
                         for (int y = 0; y < world.mapHeight; y++)
-                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile(solidTile);
+                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Brick");
                     }
                 }
             }
