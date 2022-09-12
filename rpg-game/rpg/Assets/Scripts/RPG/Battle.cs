@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using RPG.Items;
 namespace RPG
 {
     /// <summary>
@@ -40,12 +41,22 @@ namespace RPG
         public void Update()
         {
             ActiveParty.TurnThink();
+            ActiveParty.DebugAttacks();
         }
         /// <summary>
         /// Submits a party's attacks and executes them
         /// </summary>
         public void PartyAttack()
         {
+            foreach (AttackInfo attack in ActiveParty.Attacks)
+            {
+                Weapon weapon = attack.attacker.GetWeapon();
+                if (weapon != null)
+                {
+                    weapon.Attack(attack.target);
+                }
+            }
+
             OnPartyAttack?.Invoke(ActiveParty);
             NextTurn();
         }
@@ -71,6 +82,7 @@ namespace RPG
                 this.attacker = attacker;
                 this.target = target;
             }
+            public DamageInfo Damage => new DamageInfo { attacker = attacker, damage = UnityEngine.Random.Range(1.0f, 25.0f), victim = target };
             public Pawn attacker;
             public Pawn target;
         }
@@ -88,6 +100,16 @@ namespace RPG
             protected Battle battle;
             public readonly Party party;
             protected Dictionary<Pawn, AttackInfo> attacks = new Dictionary<Pawn, AttackInfo>();
+            public IEnumerable Attacks
+            {
+                get
+                {
+                    foreach (KeyValuePair<Pawn, AttackInfo> pair in attacks)
+                    {
+                        yield return pair.Value;
+                    }
+                }
+            }
             public void ExecuteAttacks()
             {
                 battle.PartyAttack();
@@ -120,6 +142,13 @@ namespace RPG
             {
                 return party.pawns[UnityEngine.Random.Range(0, party.pawns.Count)];
             }
+            public void DebugAttacks()
+            {
+                foreach (KeyValuePair<Pawn, AttackInfo> pair in attacks)
+                {
+                    UnityEngine.Debug.DrawLine(pair.Value.attacker.TileTransform.coordinates + Vector3.one / 2.0f, pair.Value.target.TileTransform.coordinates + Vector3.one / 2.0f, Color.red);
+                }
+            }
         }
         /// <summary>
         /// BattleParty whose attacks are made by the client
@@ -128,20 +157,41 @@ namespace RPG
         {
             public ClientBattle(Party p, Battle b) : base(p, b)
             {
-                
+                Selector.Current.OnObjectSelect += OnObjectSelect;
             }
+            Pawn targetPawn;
+            Pawn attackerPawn;
             public override void TurnThink()
             {
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    attacks.Clear();
+                    ExecuteAttacks();
+                }
+            }
+            void OnObjectSelect(Selector.Selection selection)
+            {
+                if (MyTurn == false)
+                    return;
 
-                    foreach (Pawn pawn in party.pawns)
+                if (selection.gameObject.TryGetComponent<Pawn>(out Pawn pawn))
+                {
+                    if (pawn.party == this.party)
                     {
-                        attacks.Add(pawn, new AttackInfo(pawn, GetEnemyParty().GetRandomPawn()));
+                        attackerPawn = pawn;
+                    }
+                    else
+                    {
+                        targetPawn = pawn;
                     }
 
-                    ExecuteAttacks();
+                    if (attackerPawn != null && targetPawn != null)
+                    {
+                        // Create attack
+                        Debug.Log($"{attackerPawn.name} attacking {targetPawn.name}");
+                        attacks[attackerPawn] = new AttackInfo { attacker = attackerPawn, target = targetPawn };
+                        attackerPawn = null;
+                        targetPawn = null;
+                    }
                 }
             }
         }

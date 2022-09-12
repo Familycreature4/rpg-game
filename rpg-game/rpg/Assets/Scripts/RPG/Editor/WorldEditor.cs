@@ -21,6 +21,9 @@ namespace RPG
                     World.instance = new GameObject("World").AddComponent<World>();
             }
 
+            TileShape.BuildShapes();
+            TileMaterial.BuildMaterials();
+
             WorldGenerator.GenerateMap(World.instance);
             MeshGenerator.Generate(World.instance);
         }

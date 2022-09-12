@@ -8,9 +8,8 @@ namespace RPG.UI
     public class Party : MonoBehaviour
     {
         RectTransform Transform => GetComponent<RectTransform>();
-        Text PartyNameText => transform.GetChild(0).GetComponent<Text>();
-        Text PartyPawnsText => transform.GetChild(1).GetComponent<Text>();
         RPG.Party party;
+        PawnStatus[] pawns;
         private void Awake()
         {
             Canvas mainCanvas = Manager.Canvas;
@@ -26,13 +25,23 @@ namespace RPG.UI
         }
         void UpdateContents()
         {
-            PartyNameText.text = "PARTY :)";
-            string pawns = "";
-            foreach (Pawn pawn in party.pawns)
+            // Remove existing UI elements
+            if (pawns != null)
             {
-                pawns += pawn.name + "\n";
+                for (int i = 0; i < pawns.Length; i++)
+                {
+                    GameObject.Destroy(pawns[i].gameObject);
+                }
             }
-            PartyPawnsText.text = pawns;
+
+            transform.Find("Header/Text").GetComponent<Text>().text = "PARTY NAME";
+
+            pawns = new PawnStatus[party.Count];
+            for (int i = 0; i < party.Count; i++)
+            {
+                pawns[i] = Instantiate(Resources.Load<GameObject>("UI/PawnStatus"), transform.Find("Pawns")).GetComponent<UI.PawnStatus>();
+                pawns[i].SetPawn(party.pawns[i]);
+            }
         }
         public void Hide()
         {
@@ -50,8 +59,6 @@ namespace RPG.UI
                 Transform.anchorMin = new Vector2(0.0f, 1.0f);
                 Transform.anchorMax = new Vector2(0.0f, 1.0f);
                 Transform.anchoredPosition = new Vector2(10, -10);
-                PartyNameText.alignment = TextAnchor.UpperLeft;
-                PartyPawnsText.alignment = TextAnchor.UpperLeft;
             }
             else
             {
@@ -59,8 +66,6 @@ namespace RPG.UI
                 Transform.anchorMin = new Vector2(1.0f, 1.0f);
                 Transform.anchorMax = new Vector2(1.0f, 1.0f);
                 Transform.anchoredPosition = new Vector2(-10, -10);
-                PartyNameText.alignment = TextAnchor.UpperRight;
-                PartyPawnsText.alignment = TextAnchor.UpperRight;
             }
         }
     }

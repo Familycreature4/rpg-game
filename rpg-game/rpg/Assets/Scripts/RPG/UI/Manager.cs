@@ -19,8 +19,8 @@ namespace RPG.UI
             if (current == null)
                 current = this;
 
-            myParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party Canvas Prefab"), Manager.Canvas.transform).GetComponent<Party>();
-            enemyParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party Canvas Prefab"), Manager.Canvas.transform).GetComponent<Party>();
+            myParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party"), Manager.Canvas.transform).GetComponent<Party>();
+            enemyParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party"), Manager.Canvas.transform).GetComponent<Party>();
 
             myParty.Hide();
             enemyParty.Hide();

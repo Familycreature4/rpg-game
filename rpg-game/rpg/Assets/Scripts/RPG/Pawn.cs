@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using RPG.Items;
 namespace RPG
 {
     /// <summary>
@@ -34,14 +35,19 @@ namespace RPG
         public Party party;
         float moveDelay = 0.125f;  // Amount of time in seconds between movements
         float nextMoveTime = 0;
-
+        public float maxHealth = 100.0f;
+        public float health = 100.0f;
+        public Items.Inventory inventory;
+        public System.Action<DamageInfo> OnDamageTaken;
         private void Start()
         {
+            inventory = new Items.Inventory(this);
+            inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
             MoveToWalkableSpace();
             transform.position = World.WorldCoordToScene(TileTransform.coordinates);
             Party.AddToParty(partyName, this);
+            health = maxHealth;
         }
-
         private void Update()
         {
             if (party != null)
@@ -76,7 +82,7 @@ namespace RPG
 
                 if (isLeader || inFormation)
                 {
-                    this.transform.rotation = Quaternion.AngleAxis(party.formationRotation + 180.0f, Vector3.up);
+                    this.transform.rotation = Quaternion.AngleAxis(party.FormationRotation + 180.0f, Vector3.up);
                 }
             }
             // Move the gameobject to the world coordinates
@@ -135,9 +141,10 @@ namespace RPG
             if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate (Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
                 TileTransform.coordinates = coords;
         }
-        public void TakeDamage()
+        public void TakeDamage(DamageInfo damage)
         {
-            Debug.Log($"Pawn {name} of {partyName} has been hurt!");
+            health -= damage.damage;
+            OnDamageTaken?.Invoke(damage);
         }
         public bool CanStandHere(Vector3Int coord)
         {
@@ -165,6 +172,16 @@ namespace RPG
             }
 
             return true;
+        }
+        public Items.Weapon GetWeapon()
+        {
+            foreach (Items.Item item in inventory.items)
+            {
+                if (item is Weapon weapon)
+                    return weapon;
+            }
+
+            return null;
         }
     }
 }

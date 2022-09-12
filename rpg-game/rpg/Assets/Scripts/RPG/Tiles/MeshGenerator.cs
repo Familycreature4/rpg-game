@@ -25,13 +25,23 @@ namespace RPG
             List<Vertex> vertices = new List<Vertex>();
             List<int> indices = new List<int>();
 
-            void AddTriangles(List<int> otherIndices, List<Vertex> otherVertices, Vector3 offset)
+            void AddTriangles(List<int> otherIndices, List<Vertex> otherVertices, Vector3 offset, TileMaterial material)
             {
+                Atlas.Bounds bounds = Atlas.GetBounds((Texture2D)material.texture);
+
                 foreach (Vertex vertex in otherVertices)
                 {
                     indices.Add(vertices.Count);
                     Vertex newVertex = vertex;
+
                     newVertex.position = (vertex.position + offset) * World.tileSize;
+                    // Scale/offset uv
+                    // Remap the mesh uvs to the uv range in the material
+                    newVertex.uv = new Vector2(
+                        Utilities.MapRange(vertex.uv.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
+                        Utilities.MapRange(vertex.uv.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
+                    );
+
                     vertices.Add(newVertex);
                 }
             }
@@ -62,7 +72,7 @@ namespace RPG
                 {
                     // Insert mesh
                     Vector3 vertexOffset = (Vector3)tileCoords;
-                    AddTriangles(shape.indices, shape.vertices, vertexOffset);
+                    AddTriangles(shape.indices, shape.vertices, vertexOffset, tile.material);
 
                     for (int d = 0; d < 6; d++)
                     {
@@ -72,7 +82,7 @@ namespace RPG
                         if (world.IsSolid(neighborCoords) == false || IsNodraw(neighborCoords))  // If the neighbor is NOT solid
                         {
                             // Insert the triangles on this face
-                            AddTriangles(shape.faces[d].indices, shape.faces[d].vertices, vertexOffset);
+                            AddTriangles(shape.faces[d].indices, shape.faces[d].vertices, vertexOffset, tile.material);
                         }
                     }
 

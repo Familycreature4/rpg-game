@@ -12,12 +12,6 @@ namespace RPG
             world.mapLength = mapData.height;
             world.mapHeight = 10;
             world.tiles = new Tile[world.mapWidth * world.mapLength * world.mapHeight];
-            // Iterate over map data
-            // Create a cube if the tile is not empty
-
-            // To do: Generate a mesh instead of creating gameobjects for every tile => Very inefficient
-
-            TileData solidTile = Resources.Load<TileData>("Tiles/Solid");
 
             for (int i = 0; i < world.mapVolume; i++)
             {
@@ -46,7 +40,7 @@ namespace RPG
                     {
                         // Wall, create tile above and below
                         for (int y = 0; y < world.mapHeight; y++)
-                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Brick");
+                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Brick 2");
                     }
                 }
             }

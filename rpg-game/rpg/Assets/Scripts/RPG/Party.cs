@@ -35,6 +35,7 @@ namespace RPG
             return null;
         }
         public Pawn Leader => pawns.Count > 0 ? pawns[0] : null;
+        public int Count => pawns.Count;
         public bool IsClient => this == Client.Current.party;
         public List<Pawn> pawns = new List<Pawn>();
         // Formations are relative to the pawn Leader (The first pawn in the pawn list)
@@ -45,7 +46,12 @@ namespace RPG
             new Vector3Int(-1, 0, -2),
             new Vector3Int(1, 0, -2),
         };
-        public float formationRotation = 0.0f;  // Rotates party around leader
+        public float FormationRotation  // Rotates party around leader
+        {  
+            get { return formationRotation % 360.0f; }
+            set { formationRotation = value; }
+        }
+        float formationRotation = 0.0f;
         /// <summary>
         /// Converts a coordinate in local party space to world space
         /// </summary>

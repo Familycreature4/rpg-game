@@ -35,10 +35,10 @@ public class Client : MonoBehaviour
             return;
 
         if (Input.GetKeyDown(KeyCode.Q))
-            party.formationRotation -= 90.0f;
+            party.FormationRotation -= 90.0f;
 
         if (Input.GetKeyDown(KeyCode.E))
-            party.formationRotation += 90.0f;
+            party.FormationRotation += 90.0f;
 
         int xMove = 0;
         int zMove = 0;
@@ -51,7 +51,7 @@ public class Client : MonoBehaviour
         if (Input.GetKey(KeyCode.S))
             zMove--;
 
-        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.formationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
+        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
         party.Move(formationMove);
         #endregion
 

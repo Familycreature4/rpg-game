@@ -11,10 +11,6 @@ public class IsoCamera : MonoBehaviour
     public float distance = 4.0f;
     float maxDistance = 7.4f;
     float minDistance = 1.0f;
-    float minFov = 60.0f;
-    float maxFov = 110.0f;
-    float minFovDistance = 7.4f;
-    float maxFovDistance = 1.5f;
     public Vector3 viewAngles;
     Vector3 origin;  // Point the camera rotates around
     public bool collide = false;
@@ -40,7 +36,7 @@ public class IsoCamera : MonoBehaviour
         }
         else
         {
-            lookAt = Client.Current.party.GetCenter();
+            lookAt = Client.Current.party.Leader.TileTransform.coordinates + Vector3.one / 2.0f;
         }
 
         origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);
