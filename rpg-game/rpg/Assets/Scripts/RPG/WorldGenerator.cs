@@ -44,7 +44,12 @@ namespace RPG
                     {
                         // Wall, create tile above and below
                         for (int y = 0; y < Chunk.size; y++)
-                            chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
+                        {
+                            if (chunk.coords.y * Chunk.size + y <= 8)
+                            {
+                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
+                            }
+                        }
                     }
                 }
             }

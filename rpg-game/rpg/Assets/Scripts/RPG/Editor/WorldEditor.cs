@@ -4,25 +4,23 @@ using UnityEngine;
 using UnityEditor;
 namespace RPG
 {
-    public class WorldEditor : ScriptableWizard
+    public class WorldEditor : EditorWindow
     {
+        public static WorldEditor instance;
         [MenuItem("RPG/World Editor")]
-        static void CreateWizard()
+        public static void ShowWindow()
         {
-            ScriptableWizard.DisplayWizard<WorldEditor>("Create World");
+            instance = (WorldEditor)GetWindow(typeof(WorldEditor));
         }
 
-        private void OnWizardCreate()
+        private void OnGUI()
         {
-            if (World.instance == null)
-            {
-                World.instance = GameObject.FindObjectOfType<World>();
-                if (World.instance == null)
-                    World.instance = new GameObject("World").AddComponent<World>();
-            }
+            GUILayout.Label("World Editor", EditorStyles.label);
 
-            TileShape.BuildShapes();
-            TileMaterial.BuildMaterials();
+            if (GUILayout.Button("Create From Image"))
+            {
+                Debug.Log("WORLD");
+            }
         }
     }
 }
