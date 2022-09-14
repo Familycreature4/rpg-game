@@ -10,15 +10,9 @@ namespace RPG
         // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/static
         public static World Current => instance;
         public static World instance;  // Singleton pattern
-        public static float tileSize = 1.0f;  // Size of a tile in the scene
-        public Tile[] tiles;
-        public bool MapReady => tiles != null;
-        public int mapVolume => mapWidth * mapLength * mapHeight;
-        public int mapWidth = 16;
-        public int mapLength = 16;
-        public int mapHeight = 2;
+        public Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
+        public HashSet<ChunkLoader> loaders = new HashSet<ChunkLoader>();
         public string mapName = "mapv2";
-
         private void Awake()
         {
             if (instance == null)
@@ -26,69 +20,78 @@ namespace RPG
 
             TileShape.BuildShapes();
             TileMaterial.BuildMaterials();
+        }
+        public void UpdateChunk(Chunk chunk)
+        {
+            bool visible = false;
+            foreach (ChunkLoader loader in loaders)
+            {
+                BoundsInt bounds = loader.Bounds;
+                if (bounds.Contains(chunk.coords))
+                {
+                    visible = true;
+                    break;
+                }
+            }
 
-            WorldGenerator.GenerateMap(this);
-            MeshGenerator.Generate(this);
+            if (chunk.component != null)
+            {
+
+            }
+        }
+        public void AssertChunkLoader(Vector3Int coords, ChunkLoader loader)
+        {
+            if (chunks.TryGetValue(coords, out Chunk chunk))
+            {
+
+            }
+            else
+            {
+                chunk = CreateChunk(coords);
+            }
+
         }
         /// <summary>
-        /// Returns the tile at coordinates x, y, z
+        /// Returns the tile at world coordinates x, y, z
         /// </summary>
         /// <returns></returns>
-        public Tile GetTile(int x, int y, int z)
+        public Tile GetTile(Vector3Int worldCoords)
         {
-            // If coords are beyond range, return air
-            if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight || z < 0 || z >= mapLength)
+            // Get the chunk coords
+            Vector3Int chunkCoords = Chunk.WorldToChunk(worldCoords);
+            if (chunks.TryGetValue(chunkCoords, out Chunk chunk))
+            {
+                return chunk.GetTile(worldCoords - chunkCoords * Chunk.size);
+            }
+            else
+            {
                 return Tile.Air;
-
-            return tiles[FlattenIndex(x, y, z)];
-        }
-        public Tile GetTile(Vector3Int c) => GetTile(c.x, c.y, c.z);
-        public Tile GetTile(int index) => tiles[index];
-        public bool InBounds(Vector3Int coords)
-        {
-            return coords.x >= 0 && coords.x < mapWidth && coords.y >= 0 && coords.y < mapHeight && coords.z >= 0 && coords.z < mapLength;
+            }
         }
         public bool IsSolid(Vector3Int coords)
         {
             Tile tile = GetTile(coords);
             return tile.IsSolid;
         }
-        public Vector3Int UnFlattenIndex(int index)
+        public Chunk CreateChunk(Vector3Int chunkCoords)
         {
-            int y = index / (mapWidth * mapLength);
-            index -= (y * (mapWidth * mapLength));
-            int z = index / mapWidth;
-            int x = index % mapWidth;
-            return new Vector3Int(x, y, z);
-        }
-        public int FlattenIndex(int x, int y, int z)
-        {
-            return (mapWidth * mapLength) * y + z * mapWidth + x;
-        }
-        public static Vector3 WorldCoordToScene(Vector3 world)
-        {
-            return (world) * World.tileSize;
-        }
-        public static Vector3Int SceneToWorldCoords(Vector3 pos)
-        {
-            pos /= World.tileSize;
-            return Vector3Int.FloorToInt(pos);
-        }
-        private void OnDrawGizmosSelected()
-        {
-            if (MapReady == false)
-                return;
+            Chunk chunk = new Chunk();
+            chunk.coords = chunkCoords;
+            chunk.tiles = new Tile[Chunk.sizeCubed];
+            chunks.Add(chunkCoords, chunk);
+            GameObject chunkObject = new GameObject(chunkCoords.ToString());
+            ChunkComponent component = chunkObject.AddComponent<ChunkComponent>();
+            component.gameObject.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Atlas");
+            component.gameObject.AddComponent<MeshFilter>();
+            component.gameObject.AddComponent<MeshCollider>();
+            component.chunk = chunk;
+            chunk.component = component;
+            chunkObject.transform.position = chunkCoords * Chunk.size;
 
-            for (int i = 0; i < mapVolume; i++)
-            {
-                Tile tile = GetTile(i);
-                if (tile.IsSolid)
-                {
-                    Vector3Int coords = UnFlattenIndex(i);
-                    Gizmos.color = coords.y == 0 ? Color.black : Color.white;
-                    Gizmos.DrawWireCube(coords + (Vector3.one / 2) * tileSize, Vector3.one * tileSize);
-                }
-            }
+            WorldGenerator.GenerateMap(chunk);
+            MeshGenerator.Generate(chunk);
+
+            return chunk;
         }
     }
 }

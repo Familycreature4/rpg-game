@@ -16,7 +16,7 @@ namespace RPG
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, 0),
         };
 
-        public static void Generate(World world, List<BoundsInt> nodraws = null)
+        public static void Generate(Chunk chunk, List<BoundsInt> nodraws = null)
         {
             // Foreach tile's neighbors
             // If neighbor is NOT blocking current tile face
@@ -34,7 +34,7 @@ namespace RPG
                     indices.Add(vertices.Count);
                     Vertex newVertex = vertex;
 
-                    newVertex.position = (vertex.position + offset) * World.tileSize;
+                    newVertex.position = (vertex.position + offset);
                     // Scale/offset uv
                     // Remap the mesh uvs to the uv range in the material
                     newVertex.uv = new Vector2(
@@ -61,25 +61,26 @@ namespace RPG
                 return false;
             }
 
-            for (int i = 0; i < world.mapVolume; i++)
+            for (int i = 0; i < Chunk.sizeCubed; i++)
             {
-                Vector3Int tileCoords = world.UnFlattenIndex(i);
+                Vector3Int localCoords = Chunk.UnFlattenIndex(i);
+                Vector3Int worldCoords = localCoords + chunk.coords * Chunk.size;
                 // Get tile
-                Tile tile = world.GetTile(tileCoords);
+                Tile tile = chunk.GetTile(localCoords);
 
                 TileShape shape = tile.shape;
-                if (shape != null && IsNodraw(tileCoords) == false)  // If this tile has a mesh to insert
+                if (shape != null && IsNodraw(worldCoords) == false)  // If this tile has a mesh to insert
                 {
                     // Insert mesh
-                    Vector3 vertexOffset = (Vector3)tileCoords;
+                    Vector3 vertexOffset = (Vector3)localCoords;
                     AddTriangles(shape.indices, shape.vertices, vertexOffset, tile.material);
 
                     for (int d = 0; d < 6; d++)
                     {
                         // Get neighbor tile
                         Vector3Int direction = Tile.neighbors[d];
-                        Vector3Int neighborCoords = tileCoords + direction;
-                        if (world.IsSolid(neighborCoords) == false || IsNodraw(neighborCoords))  // If the neighbor is NOT solid
+                        Vector3Int neighborCoords = worldCoords + direction;
+                        if (World.instance.IsSolid(neighborCoords) == false || IsNodraw(neighborCoords))  // If the neighbor is NOT solid
                         {
                             // Insert the triangles on this face
                             AddTriangles(shape.faces[d].indices, shape.faces[d].vertices, vertexOffset, tile.material);
@@ -92,38 +93,19 @@ namespace RPG
             // Mesh has been created
             // Apply to gameobject
 
-            MeshFilter filter;
-            if (world.gameObject.TryGetComponent<MeshFilter>(out filter) == false)
-            {
-                filter = world.gameObject.AddComponent<MeshFilter>();
-            }
-
-            MeshRenderer renderer;
-            if (world.gameObject.TryGetComponent<MeshRenderer>(out renderer) == false)
-            {
-                renderer = world.gameObject.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = Resources.Load<Material>("Materials/Old Brick");
-            }
-
-            MeshCollider collider;
-            if (world.gameObject.TryGetComponent<MeshCollider>(out collider) == false)
-            {
-                collider = world.gameObject.AddComponent<MeshCollider>();
-            }
-
             Mesh mesh = new Mesh();
-            mesh.indexFormat = indices.Count >= 32684 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
+            //IndexFormat format = indices.Count >= 65536 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
             mesh.SetVertexBufferParams(vertices.Count, attributes);
             mesh.SetVertexBufferData<Vertex>(vertices, 0, 0, vertices.Count);
-            mesh.SetIndexBufferParams(indices.Count, mesh.indexFormat);
-            mesh.SetIndexBufferData(indices, 0, 0, indices.Count);
+            mesh.SetIndexBufferParams(indices.Count, UnityEngine.Rendering.IndexFormat.UInt32);
+            mesh.SetIndexBufferData(indices, 0, 0, indices.Count, MeshUpdateFlags.Default);
             mesh.SetSubMesh(0, new SubMeshDescriptor { baseVertex = 0, firstVertex = 0, indexCount = indices.Count, vertexCount = vertices.Count });
 
             mesh.RecalculateBounds();
             mesh.RecalculateNormals();
 
-            filter.sharedMesh = mesh;
-            collider.sharedMesh = mesh;
+            chunk.component.MeshFilter.sharedMesh = mesh;
+            chunk.component.Collider.sharedMesh = mesh;
         }
 
         public struct Vertex

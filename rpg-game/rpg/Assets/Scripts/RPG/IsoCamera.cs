@@ -36,7 +36,7 @@ public class IsoCamera : MonoBehaviour
         }
         else
         {
-            lookAt = Client.Current.party.Leader.TileTransform.coordinates + Vector3.one / 2.0f;
+            lookAt = Client.Current.party.Leader.TileTransform.coordinates + Vector3.one / 2.0f + Vector3.up;
         }
 
         origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);

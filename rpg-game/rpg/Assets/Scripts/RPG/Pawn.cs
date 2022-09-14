@@ -43,8 +43,8 @@ namespace RPG
         {
             inventory = new Items.Inventory(this);
             inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
-            MoveToWalkableSpace();
-            transform.position = World.WorldCoordToScene(TileTransform.coordinates);
+            //MoveToWalkableSpace();
+            transform.position = TileTransform.coordinates + Vector3.one / 2.0f;
             Party.AddToParty(partyName, this);
             health = maxHealth;
         }
@@ -86,7 +86,7 @@ namespace RPG
                 }
             }
             // Move the gameobject to the world coordinates
-            Vector3 targetGOPosition = (Vector3)(TileTransform.coordinates + Vector3.one / 2.0f) * World.tileSize;
+            Vector3 targetGOPosition = (Vector3)(TileTransform.coordinates + Vector3.one / 2.0f);
             Vector3 position = Vector3.MoveTowards(transform.position, targetGOPosition, moveDelay);
             transform.position = position;
         }
@@ -116,10 +116,6 @@ namespace RPG
 
             Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
             Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
-            // Restrict to map bounds
-            targetCoordinates.x = Mathf.Clamp(targetCoordinates.x, 0, World.instance.mapWidth - 1);
-            targetCoordinates.y = Mathf.Clamp(targetCoordinates.y, 0, World.instance.mapHeight - 1);
-            targetCoordinates.z = Mathf.Clamp(targetCoordinates.z, 0, World.instance.mapLength - 1);
 
             // To do: Give tiles flags (IE walkable, solid) instead
             // Test whether the coordinates are walkable
@@ -135,9 +131,6 @@ namespace RPG
         /// </summary>
         void MoveToWalkableSpace()
         {
-            if (World.instance.MapReady == false)
-                return;
-
             if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate (Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
                 TileTransform.coordinates = coords;
         }

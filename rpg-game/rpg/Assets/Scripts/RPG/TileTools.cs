@@ -131,7 +131,7 @@ namespace RPG
             List<Vector3Int> openCoords = new List<Vector3Int>();
 
             openCoords.Add(start);
-            int maxIterations = 1000000;
+            int maxIterations = 1000;
             int iteration = 0;
 
             while (openCoords.Count > 0 && iteration < maxIterations)
@@ -149,7 +149,7 @@ namespace RPG
                 foreach (Vector3Int direction in directionsAll)
                 {
                     Vector3Int neighborCoords = direction + currentCoords;
-                    if (World.instance.InBounds(neighborCoords) && explored.Contains(neighborCoords) == false)
+                    if (explored.Contains(neighborCoords) == false)
                     {
                         openCoords.Add(neighborCoords);
                         explored.Add(neighborCoords);

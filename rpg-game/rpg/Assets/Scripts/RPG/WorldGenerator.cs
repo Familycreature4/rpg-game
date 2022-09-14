@@ -5,26 +5,24 @@ namespace RPG
 {
     public static class WorldGenerator
     {
-        public static void GenerateMap(World world)
+        public static void GenerateMap(Chunk chunk)
         {
-            Texture2D mapData = Resources.Load<Texture2D>($"Map/{world.mapName}");
-            world.mapWidth = mapData.width;
-            world.mapLength = mapData.height;
-            world.mapHeight = 10;
-            world.tiles = new Tile[world.mapWidth * world.mapLength * world.mapHeight];
+            Texture2D mapData = Resources.Load<Texture2D>($"Map/{World.instance.mapName}");
 
-            for (int i = 0; i < world.mapVolume; i++)
+            for (int i = 0; i < Chunk.sizeCubed; i++)
+                chunk.tiles[i] = Tile.Air;
+
+            for (int x = 0; x < Chunk.size; x++)
             {
-                world.tiles[i] = Tile.Air;
-            }
-
-
-            for (int x = 0; x < world.mapWidth; x++)
-            {
-                for (int z = 0; z < world.mapLength; z++)
+                for (int z = 0; z < Chunk.size; z++)
                 {
                     // Sample image
-                    Color32 color = mapData.GetPixel(x, z);
+                    // Check if coords are in image bounds
+                    Vector3Int worldCoords = chunk.coords * Chunk.size + new Vector3Int(x, 0, z);
+                    if (worldCoords.x < 0 || worldCoords.x >= mapData.width || worldCoords.z < 0 || worldCoords.z >= mapData.height)
+                        continue;
+
+                    Color32 color = mapData.GetPixel(worldCoords.x, worldCoords.z);
 
                     if (color.r == 0)
                     {
@@ -33,14 +31,20 @@ namespace RPG
                     else if (color.r == 145)
                     {
                         // Path, create tile below
-                        for (int y = 4; y >= 0; y--)
-                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Clay");
+                        for (int y = 0; y < Chunk.size; y++)
+                        {
+                            if (chunk.coords.y * Chunk.size + y <= 4)
+                            {
+                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
+                            }
+                        }
+                            
                     }
                     else if (color.r == 255)
                     {
                         // Wall, create tile above and below
-                        for (int y = 0; y < world.mapHeight; y++)
-                            world.tiles[world.FlattenIndex(x, y, z)] = new Tile("Brick 2");
+                        for (int y = 0; y < Chunk.size; y++)
+                            chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
                     }
                 }
             }

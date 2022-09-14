@@ -83,21 +83,4 @@ public class Client : MonoBehaviour
 
         //DebugDraw.DrawCube(intBounds.center, intBounds.size, Color.white);
     }
-    private void OnDrawGizmos()
-    {
-        if (party == null)
-            return;
-
-        foreach (Vector3Int local in party.formationLocalPositions)
-        {
-            Gizmos.DrawCube(World.WorldCoordToScene(party.TransformFormationPosition(local) + Vector3.one / 2.0f), new Vector3(1, 1, 1));
-        }
-    }
-    void OnObjectSelected(GameObject ob)
-    {
-        if (ob.TryGetComponent<Pawn>(out Pawn pawn))
-        {
-            Debug.Log(pawn.name);
-        }
-    }
 }

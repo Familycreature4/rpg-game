@@ -23,9 +23,6 @@ namespace RPG
 
             TileShape.BuildShapes();
             TileMaterial.BuildMaterials();
-
-            WorldGenerator.GenerateMap(World.instance);
-            MeshGenerator.Generate(World.instance);
         }
     }
 }
