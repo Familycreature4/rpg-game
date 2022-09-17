@@ -11,6 +11,7 @@ namespace RPG.UI
         public static Manager Current => current;
         public static Canvas Canvas => Current.GetComponent<Canvas>();
         static Manager current;
+        public InfoHelper infoHelper;
         Party myParty;
         Party enemyParty;
 
@@ -20,12 +21,15 @@ namespace RPG.UI
                 current = this;
 
             myParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party"), Manager.Canvas.transform).GetComponent<Party>();
-            enemyParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party"), Manager.Canvas.transform).GetComponent<Party>();
-
             myParty.Hide();
+            enemyParty = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party"), Manager.Canvas.transform).GetComponent<Party>();
             enemyParty.Hide();
+            infoHelper = GameObject.Instantiate(Resources.Load<GameObject>("UI/InfoHelper"), Manager.Canvas.transform).GetComponent<InfoHelper>();
+            infoHelper.Hide();
 
             Director.Current.OnBattleStart += OnBattleStart;
+            myParty.onPawnSelect += OnPawnSelect;
+            enemyParty.onPawnSelect += OnPawnSelect;
         }
 
         void OnBattleStart(Battle battle)
@@ -44,6 +48,11 @@ namespace RPG.UI
                 partyUI.SetParty(p.party);
                 partyUI.Show();
             }
+        }
+
+        void OnPawnSelect(RPG.Party party, Pawn pawn)
+        {
+            Selector.Current.OnObjectSelect?.Invoke(new Selector.Selection { gameObject = pawn.gameObject });
         }
     }
 }

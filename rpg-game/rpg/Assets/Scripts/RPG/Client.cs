@@ -34,12 +34,6 @@ public class Client : MonoBehaviour
         if (party == null)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Q))
-            party.FormationRotation -= 90.0f;
-
-        if (Input.GetKeyDown(KeyCode.E))
-            party.FormationRotation += 90.0f;
-
         int xMove = 0;
         int zMove = 0;
         if (Input.GetKey(KeyCode.A))
@@ -51,7 +45,7 @@ public class Client : MonoBehaviour
         if (Input.GetKey(KeyCode.S))
             zMove--;
 
-        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
+        Vector3Int formationMove = new Vector3Int(zMove, 0, -xMove);
         party.Move(formationMove);
         #endregion
 
@@ -59,8 +53,8 @@ public class Client : MonoBehaviour
         IsoCamera.Current.distance -= Input.GetAxisRaw("Mouse ScrollWheel") * 4.0f;
         if (Input.GetMouseButton(1))
         {
-            IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
-            IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
+            //IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
+            //IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
             IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
         }
         #endregion

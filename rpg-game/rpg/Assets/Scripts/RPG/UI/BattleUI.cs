@@ -11,16 +11,23 @@ namespace RPG.UI
         {
             Director.Current.OnBattlePartyTurn += OnPartyTurn;
             Director.Current.OnBattleStart += OnBattleStart;
+            Director.Current.onBattleEnd += OnBattleEnd;
             GetComponent<Canvas>().enabled = false;
         }
         void OnPartyTurn(Battle.BattleParty battleParty)
         {
-            string text = battleParty.party.IsClient ? "YOUR TURN" : "ENEMY'S TURN";
+            bool clientTurn = battleParty.party.IsClient;
+            string text = clientTurn ? "YOUR TURN" : "ENEMY'S TURN";
             TurnText.text = text;
         }
         void OnBattleStart(Battle battle)
         {
             GetComponent<Canvas>().enabled = true;
+        }
+
+        void OnBattleEnd(Battle battle)
+        {
+            GetComponent<Canvas>().enabled = false;
         }
     }
 }

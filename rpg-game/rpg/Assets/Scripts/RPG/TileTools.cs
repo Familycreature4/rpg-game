@@ -69,7 +69,7 @@ namespace RPG
                 openTiles.RemoveAt(0);
                 closedTiles.Add(currentTile.coords);
 
-                foreach (Vector3Int direction in Tile.neighbors)
+                foreach (Vector3Int direction in directionsAll)
                 {
                     Vector3Int neighborCoords = currentTile.coords + direction;
 

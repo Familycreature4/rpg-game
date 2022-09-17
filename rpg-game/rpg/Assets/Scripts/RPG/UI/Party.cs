@@ -10,6 +10,7 @@ namespace RPG.UI
         RectTransform Transform => GetComponent<RectTransform>();
         RPG.Party party;
         PawnStatus[] pawns;
+        public System.Action<RPG.Party, Pawn> onPawnSelect;
         private void Awake()
         {
             Canvas mainCanvas = Manager.Canvas;
@@ -23,6 +24,11 @@ namespace RPG.UI
             this.party = party;
             UpdateContents();
         }
+        void OnPawnSelect(PawnStatus status)
+        {
+            onPawnSelect?.Invoke(party, status.pawn);
+            Debug.Log($"{status.pawn} selected");
+        }
         void UpdateContents()
         {
             // Remove existing UI elements
@@ -30,7 +36,9 @@ namespace RPG.UI
             {
                 for (int i = 0; i < pawns.Length; i++)
                 {
-                    GameObject.Destroy(pawns[i].gameObject);
+                    GameObject ui = pawns[i].gameObject;
+                    pawns[i].onClicked -= OnPawnSelect;
+                    GameObject.Destroy(ui);
                 }
             }
 
@@ -40,6 +48,7 @@ namespace RPG.UI
             for (int i = 0; i < party.Count; i++)
             {
                 pawns[i] = Instantiate(Resources.Load<GameObject>("UI/PawnStatus"), transform.Find("Pawns")).GetComponent<UI.PawnStatus>();
+                pawns[i].onClicked += OnPawnSelect;
                 pawns[i].SetPawn(party.pawns[i]);
             }
         }

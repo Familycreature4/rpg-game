@@ -18,7 +18,22 @@ namespace RPG
                 return Time.time >= nextMoveTime;
             }
         }
+        public bool IsDead => health <= 0;
         public TileTransform TileTransform => GetComponent<TileTransform>();
+        public bool IsLeader
+        {
+            get
+            {
+                if (party != null)
+                {
+                    return this == party.Leader;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
         public Vector3Int Coordinates
         {
             get
@@ -39,6 +54,7 @@ namespace RPG
         public float health = 100.0f;
         public Items.Inventory inventory;
         public System.Action<DamageInfo> OnDamageTaken;
+        public System.Action onDeath;
         private void Start()
         {
             inventory = new Items.Inventory(this);
@@ -102,18 +118,6 @@ namespace RPG
             if (displacement == Vector3Int.zero)
                 return;
 
-            // Prevent diagonal movements
-            //for (int i = 0; i < 3; i++)
-            //{
-            //    if (displacement[i] != 0)
-            //    {
-            //        // Get the other two indices/Components
-            //        displacement[(i + 2) % 3] = 0;
-            //        displacement[(i + 1) % 3] = 0;
-            //        break;
-            //    }
-            //}
-
             Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
             Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
 
@@ -134,10 +138,19 @@ namespace RPG
             if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate (Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
                 TileTransform.coordinates = coords;
         }
+        public void ResetMoveTime()
+        {
+            nextMoveTime = Time.time;
+        }
         public void TakeDamage(DamageInfo damage)
         {
-            health -= damage.damage;
+            health = Mathf.Max(health - damage.damage, 0);
             OnDamageTaken?.Invoke(damage);
+
+            if (health <= 0)
+            {
+                gameObject.SetActive(false);
+            }
         }
         public bool CanStandHere(Vector3Int coord)
         {

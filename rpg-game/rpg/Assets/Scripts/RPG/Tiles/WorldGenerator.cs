@@ -35,7 +35,7 @@ namespace RPG
                         {
                             if (chunk.coords.y * Chunk.size + y <= 4)
                             {
-                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
+                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Slate Roof");
                             }
                         }
                             

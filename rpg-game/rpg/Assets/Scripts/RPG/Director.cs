@@ -22,6 +22,7 @@ namespace RPG
         public State state = State.Peace;
         public Battle activeBattle;
         public Action<Battle> OnBattleStart;
+        public Action<Battle> onBattleEnd;
         public Action<Battle.BattleParty> OnBattlePartyTurn;
         public Action<Battle.BattleParty> OnBattlePartyAttack;
         private void Awake()
@@ -47,27 +48,16 @@ namespace RPG
             // Subscribe the director events to the battle
             activeBattle.OnPartyAttack += OnBattlePartyAttack;
             activeBattle.OnPartyTurn += OnBattlePartyTurn;
+            activeBattle.onBattleFinished += EndBattle;
 
             OnBattleStart?.Invoke(activeBattle);
-
-            //// Set ui stuff
-            //foreach (UI.Party partyCanvas in GameObject.FindObjectsOfType<UI.Party>())
-            //{
-            //    GameObject.Destroy(partyCanvas.gameObject);
-            //}
-
-            //foreach (Party party in parties)
-            //{
-            //    UI.Party partyCanvas = GameObject.Instantiate(Resources.Load<GameObject>("UI/Party Canvas Prefab")).GetComponent<UI.Party>();
-            //    partyCanvas.SetParty(party);
-            //}
         }
 
-        public void EndBattle()
+        public void EndBattle(Battle battle)
         {
+            onBattleEnd?.Invoke(battle);
             state = State.Peace;
-            activeBattle.OnPartyAttack -= OnBattlePartyAttack;
-            activeBattle.OnPartyTurn -= OnBattlePartyTurn;
+            activeBattle = null;
         }
     }
 }

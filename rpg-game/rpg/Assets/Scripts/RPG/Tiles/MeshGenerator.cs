@@ -38,8 +38,8 @@ namespace RPG
                     // Scale/offset uv
                     // Remap the mesh uvs to the uv range in the material
                     newVertex.uv = new Vector2(
-                        Utilities.MapRange(vertex.uv.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
-                        Utilities.MapRange(vertex.uv.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
+                        Utilities.MapRange(vertex.uv.x * material.uvScale.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
+                        Utilities.MapRange(vertex.uv.y * material.uvScale.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
                     );
 
                     vertices.Add(newVertex);

@@ -8,7 +8,8 @@ namespace RPG.UI
     {
         Text PawnName => transform.Find("PawnName").GetComponent<Text>();
         Text DamageText => transform.Find("PawnHealth").GetComponent<Text>();
-        Pawn pawn;
+        public Pawn pawn;
+        public System.Action<PawnStatus> onClicked;
         public void SetPawn(Pawn pawn)
         {
             if (this.pawn != null)
@@ -32,6 +33,10 @@ namespace RPG.UI
         void OnDamage(DamageInfo damage)
         {
             UpdateContents();
+        }
+        public void InvokeClick()
+        {
+            onClicked?.Invoke(this);
         }
     }
 }

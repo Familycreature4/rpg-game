@@ -26,6 +26,7 @@ namespace RPG.UI
         {
             GetComponent<Canvas>().enabled = false;
         }
+
         private void LateUpdate()
         {
             if (GetComponent<Canvas>().enabled)

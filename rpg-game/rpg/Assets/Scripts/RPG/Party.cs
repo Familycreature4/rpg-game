@@ -59,7 +59,7 @@ namespace RPG
         /// <returns></returns>
         public Vector3Int TransformFormationPosition(Vector3Int local)
         {
-            Vector3 pos = Quaternion.AngleAxis(Mathf.Round(formationRotation / 90.0f) * 90.0f, Vector3.up) * local;
+            Vector3 pos = Quaternion.AngleAxis(FormationRotation, Vector3.up) * local;
             pos += Leader.TileTransform.coordinates;
             return Vector3Int.FloorToInt(pos);
         }
@@ -80,13 +80,17 @@ namespace RPG
         }
         public virtual void Update()
         {
-
+            
         }
         public bool Contains(Pawn p) => pawns.Contains(p);
         public void Move(Vector3Int displacement)
         {
+            if (displacement.magnitude == 0)
+                return;
             if (Director.Current.state == Director.State.Combat)
                 return;
+
+            FormationRotation = Quaternion.LookRotation(displacement).eulerAngles.y;
 
             Leader?.Move(displacement);
         }
