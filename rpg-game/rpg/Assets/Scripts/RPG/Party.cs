@@ -35,6 +35,7 @@ namespace RPG
             return null;
         }
         public Pawn Leader => pawns.Count > 0 ? pawns[0] : null;
+        public bool CanMove => Leader.CanMove;
         public int Count => pawns.Count;
         public bool IsClient => this == Client.Current.party;
         public List<Pawn> pawns = new List<Pawn>();
@@ -90,9 +91,12 @@ namespace RPG
             if (Director.Current.state == Director.State.Combat)
                 return;
 
-            FormationRotation = Quaternion.LookRotation(displacement).eulerAngles.y;
-
-            Leader?.Move(displacement);
+            Leader.Move(displacement);
+            //if (Leader.CanMove)
+            //{
+            //    FormationRotation = Quaternion.LookRotation(displacement).eulerAngles.y;
+            //    Leader.InvokeMoveDelay();
+            //}
         }
     }
 }

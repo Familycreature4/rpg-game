@@ -12,6 +12,7 @@ namespace RPG.UI
         public static Canvas Canvas => Current.GetComponent<Canvas>();
         static Manager current;
         public InfoHelper infoHelper;
+        PawnSheet sheet;
         Party myParty;
         Party enemyParty;
 
@@ -26,10 +27,13 @@ namespace RPG.UI
             enemyParty.Hide();
             infoHelper = GameObject.Instantiate(Resources.Load<GameObject>("UI/InfoHelper"), Manager.Canvas.transform).GetComponent<InfoHelper>();
             infoHelper.Hide();
+            sheet = GameObject.Instantiate(Resources.Load<GameObject>("UI/PawnSheet"), Manager.Canvas.transform).GetComponent<PawnSheet>();
+            sheet.GetComponent<Canvas>().enabled = false;
 
             Director.Current.OnBattleStart += OnBattleStart;
             myParty.onPawnSelect += OnPawnSelect;
             enemyParty.onPawnSelect += OnPawnSelect;
+            Selector.Current.OnObjectSelect += OnObjectSelect;
         }
 
         void OnBattleStart(Battle battle)
@@ -49,10 +53,17 @@ namespace RPG.UI
                 partyUI.Show();
             }
         }
-
         void OnPawnSelect(RPG.Party party, Pawn pawn)
         {
             Selector.Current.OnObjectSelect?.Invoke(new Selector.Selection { gameObject = pawn.gameObject });
+        }
+        void OnObjectSelect(Selector.Selection selection)
+        {
+            if (selection.gameObject.TryGetComponent<Pawn>(out Pawn pawn))
+            {
+                sheet.SetPawn(pawn);
+                sheet.GetComponent<Canvas>().enabled = true;
+            }
         }
     }
 }

@@ -34,18 +34,32 @@ public class Client : MonoBehaviour
         if (party == null)
             return;
 
+        if (party.CanMove)
+        {
+            if (Input.GetKey(KeyCode.Q))
+            {
+                party.FormationRotation -= 90.0f;
+                party.Leader.InvokeMoveDelay();
+            }
+            if (Input.GetKey(KeyCode.E))
+            {
+                party.FormationRotation += 90.0f;
+                party.Leader.InvokeMoveDelay();
+            }
+        }
         int xMove = 0;
         int zMove = 0;
-        if (Input.GetKey(KeyCode.A))
-            xMove--;
-        if (Input.GetKey(KeyCode.D))
-            xMove++;
+        
         if (Input.GetKey(KeyCode.W))
             zMove++;
         if (Input.GetKey(KeyCode.S))
             zMove--;
+        if (Input.GetKey(KeyCode.A))
+            xMove--;
+        if (Input.GetKey(KeyCode.D))
+            xMove++;
 
-        Vector3Int formationMove = new Vector3Int(zMove, 0, -xMove);
+        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
         party.Move(formationMove);
         #endregion
 
@@ -63,18 +77,5 @@ public class Client : MonoBehaviour
         {
             Director.Current.InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
         }
-
-        //UnityEngine.Bounds bounds = new UnityEngine.Bounds(party.GetCenter(), new Vector3(1, 1, 1));
-        //bounds.Encapsulate(IsoCamera.Current.transform.position + Vector3.up * 4.0f);
-        //BoundsInt intBounds = new BoundsInt((int)bounds.min.x, (int)bounds.min.y, (int)bounds.min.z, (int)bounds.size.x, (int)bounds.size.y, (int)bounds.size.z);
-        //if (intBounds.min != lastCameraBounds.min || intBounds.max != lastCameraBounds.max)
-        //{
-        //    lastCameraBounds = intBounds;
-        //    List<BoundsInt> listBounds = new List<BoundsInt>();
-        //    listBounds.Add(intBounds);
-        //    MeshGenerator.Generate(World.Current, listBounds);
-        //}
-
-        //DebugDraw.DrawCube(intBounds.center, intBounds.size, Color.white);
     }
 }

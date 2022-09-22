@@ -11,7 +11,7 @@ namespace RPG
     {
         // THIS HAS BEEN CERTIFIED BY THE CREATURE
         // CREATURE CODE QUALITY STAMP OF APPROVAL
-        bool CanMove
+        public bool CanMove
         {
             get
             {
@@ -34,6 +34,13 @@ namespace RPG
                 }
             }
         }
+        public Party party;
+        public Items.Inventory inventory;
+        public Stats stats;
+        public System.Action<DamageInfo> OnDamageTaken;
+        public System.Action onDeath;
+        public new string name;
+        public string partyName;
         public Vector3Int Coordinates
         {
             get
@@ -45,18 +52,13 @@ namespace RPG
                 TileTransform.coordinates = value;
             }
         }
-        public new string name;
-        public string partyName;
-        public Party party;
-        float moveDelay = 0.125f;  // Amount of time in seconds between movements
+        float moveDelay = 0.2f;  // Amount of time in seconds between movements
         float nextMoveTime = 0;
         public float maxHealth = 100.0f;
         public float health = 100.0f;
-        public Items.Inventory inventory;
-        public System.Action<DamageInfo> OnDamageTaken;
-        public System.Action onDeath;
         private void Start()
         {
+            stats = new Stats();
             inventory = new Items.Inventory(this);
             inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
             //MoveToWalkableSpace();
@@ -110,13 +112,13 @@ namespace RPG
         /// Attempts to move the pawn in the world
         /// </summary>
         /// <param name="displacement">Offset in tiles to displace the pawn by</param>
-        public void Move(Vector3Int displacement)
+        public bool Move(Vector3Int displacement)
         {
             if (CanMove == false)
-                return;
+                return false;
 
             if (displacement == Vector3Int.zero)
-                return;
+                return false;
 
             Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
             Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
@@ -128,7 +130,11 @@ namespace RPG
                 this.transform.rotation = Quaternion.LookRotation(-displacement);
                 TileTransform.coordinates = targetCoordinates;
                 nextMoveTime = Time.time + moveDelay;
+
+                return true;
             }
+
+            return false;
         }
         /// <summary>
         /// Teleports the pawn to a walkable tile
@@ -141,6 +147,10 @@ namespace RPG
         public void ResetMoveTime()
         {
             nextMoveTime = Time.time;
+        }
+        public void InvokeMoveDelay()
+        {
+            nextMoveTime = Time.time + moveDelay;
         }
         public void TakeDamage(DamageInfo damage)
         {

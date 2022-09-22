@@ -9,7 +9,14 @@ namespace RPG.Items
         public float baseDamage = 30.0f;
         public void Attack(Pawn target)
         {
-            target.TakeDamage(new DamageInfo { attacker = inventory.owner, damage = baseDamage, victim = target });
+            int damageStat = Owner.stats.GetStat( Statistic.Type.Strength ).Value;
+            float damage = baseDamage * (Mathf.Log(damageStat, 10.0f) + 1); // Log -> slope decay as X goes to infinity
+
+            target.TakeDamage(new DamageInfo { 
+                attacker = Owner, 
+                damage = damage, 
+                victim = target 
+            });
         }
         public static Weapon GetRandomWeapon()
         {

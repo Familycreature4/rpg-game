@@ -12,6 +12,7 @@ public class IsoCamera : MonoBehaviour
     float maxDistance = 7.4f;
     float minDistance = 1.0f;
     public Vector3 viewAngles;
+    public Vector3 targetViewAngles;
     Vector3 origin;  // Point the camera rotates around
     public bool collide = false;
 
@@ -20,6 +21,7 @@ public class IsoCamera : MonoBehaviour
         if (instance == null)
             instance = this;
         camera = GetComponent<Camera>();
+        targetViewAngles = transform.rotation.eulerAngles;
     }
 
     private void LateUpdate()
@@ -41,24 +43,28 @@ public class IsoCamera : MonoBehaviour
 
         origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);
 
-        Vector3 targetPosition = origin + Quaternion.Euler(viewAngles) * Vector3.forward * distance * 2.0f;
+        targetViewAngles.y = Client.Current.party.FormationRotation + 180;
 
-        if (collide)
-        {
-            Vector3 direction = (targetPosition - lookAt).normalized;
-            float length = (targetPosition - lookAt).magnitude;
-            RaycastHit[] hits = Physics.RaycastAll(lookAt, direction, length, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-            System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
-            foreach (RaycastHit hit in hits)
-            {
-                if (hit.collider.gameObject.GetComponent<World>())
-                {
-                    float dot = Vector3.Dot(direction, hit.normal);
-                    targetPosition = hit.point + (hit.normal * 0.125f) * (1.0f - Mathf.Abs(dot));
-                    break;
-                }
-            }
-        }
+        viewAngles.y = Mathf.LerpAngle(viewAngles.y, targetViewAngles.y, Time.deltaTime * 5.0f);
+
+        Vector3 targetPosition = origin + Quaternion.Euler(viewAngles ) * Vector3.forward * distance * 2.0f;
+
+        //if (collide)
+        //{
+        //    Vector3 direction = (targetPosition - lookAt).normalized;
+        //    float length = (targetPosition - lookAt).magnitude;
+        //    RaycastHit[] hits = Physics.RaycastAll(lookAt, direction, length, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        //    System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
+        //    foreach (RaycastHit hit in hits)
+        //    {
+        //        if (hit.collider.gameObject.GetComponent<World>())
+        //        {
+        //            float dot = Vector3.Dot(direction, hit.normal);
+        //            targetPosition = hit.point + (hit.normal * 0.125f) * (1.0f - Mathf.Abs(dot));
+        //            break;
+        //        }
+        //    }
+        //}
 
         transform.position = targetPosition;
         transform.forward = Quaternion.Euler(viewAngles) * -Vector3.forward;

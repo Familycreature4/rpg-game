@@ -55,6 +55,13 @@ namespace RPG
 
         public void EndBattle(Battle battle)
         {
+            foreach (Battle.BattleParty party in battle.parties)
+            {
+                foreach (Pawn pawn in party.party.pawns)
+                {
+                    pawn.health = pawn.maxHealth;
+                }
+            }
             onBattleEnd?.Invoke(battle);
             state = State.Peace;
             activeBattle = null;

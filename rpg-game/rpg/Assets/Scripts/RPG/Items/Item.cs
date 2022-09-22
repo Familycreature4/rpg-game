@@ -15,6 +15,7 @@ namespace RPG.Items
         {
 
         }
+        public Pawn Owner => inventory.owner;
         public Sprite icon;
         public Inventory inventory;
     }
