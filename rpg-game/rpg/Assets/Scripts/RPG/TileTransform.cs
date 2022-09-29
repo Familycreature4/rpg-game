@@ -20,7 +20,8 @@ namespace RPG
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireCube(Bounds.mins + (Vector3)Bounds.size / 2.0f, (Vector3)size);
+            Gizmos.DrawWireCube((Vector3Int.FloorToInt(transform.position) + new Vector3(0.5f, size.y / 2.0f, 0.5f)), size);
+            //Gizmos.DrawWireCube(Bounds.mins + (Vector3)Bounds.size / 2.0f, (Vector3)size);
         }
     }
 }

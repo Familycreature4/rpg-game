@@ -73,13 +73,16 @@ namespace RPG
             }
             public Pawn GetRandomAlivePawn()
             {
-                foreach (Pawn otherPawn in party.pawns)
+                if (AllDead)
+                    return null;
+
+                while (true)
                 {
-                    if (otherPawn.IsDead == false)
-                        return otherPawn;
+                    Pawn pawn = party.pawns[UnityEngine.Random.Range(0, party.Count)];
+                    if (pawn.IsDead == false)
+                        return pawn;
                 }
 
-                return null;
             }
             public void DebugAttacks()
             {

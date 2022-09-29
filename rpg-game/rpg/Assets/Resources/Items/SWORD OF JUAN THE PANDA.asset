@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: SWORD OF JUAN THE PANDA
   m_EditorClassIdentifier: 
   icon: {fileID: 21300000, guid: db969bee7351e414397326957b5bccf7, type: 3}
-  baseDamage: 40
+  baseDamage: 25

@@ -53,11 +53,27 @@ namespace RPG
                 if (attack.attacker.IsDead)
                     continue;
 
-                Weapon weapon = attack.attacker.GetWeapon();
-                if (weapon != null)
+                // Have both attacker and target attack
+                // Whoever is faster will attack first
+
+                int attackerSpeed = attack.attacker.stats.GetStat( Statistic.Type.Speed ).Value;
+                int targetSpeed = attack.target.stats.GetStat(Statistic.Type.Speed).Value;
+
+                Pawn first = attack.attacker;
+                Pawn second = attack.target;
+
+                if (attackerSpeed < targetSpeed)
                 {
-                    weapon.Attack(attack.target);
+                    first = attack.target;
+                    second = attack.attacker;
                 }
+
+                first.GetWeapon()?.Attack(second);
+
+                if (second.IsDead)
+                    continue;
+
+                second.GetWeapon()?.Attack(first);
             }
 
             OnPartyAttack?.Invoke(ActiveParty);

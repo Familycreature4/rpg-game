@@ -69,7 +69,7 @@ public class Client : MonoBehaviour
         {
             //IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
             //IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
-            IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
+            //IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
         }
         #endregion
 

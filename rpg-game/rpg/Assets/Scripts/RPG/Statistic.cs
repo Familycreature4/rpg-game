@@ -12,7 +12,7 @@ namespace RPG
         {
             Strength,
             Vitality,
-            Intelligence
+            Speed,
         }
         public Statistic(Type type, int value)
         {
@@ -36,15 +36,13 @@ namespace RPG
         {
             switch (type)
             {
-                case Type.Intelligence:
-                    return "Intelligence";
                 case Type.Strength:
                     return "Strength";
                 case Type.Vitality:
                     return "Vitality";
             }
 
-            return "";
+            return type.ToString();
         }
     }
 }

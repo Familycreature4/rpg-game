@@ -11,8 +11,9 @@ public class IsoCamera : MonoBehaviour
     public float distance = 4.0f;
     float maxDistance = 7.4f;
     float minDistance = 1.0f;
-    public Vector3 viewAngles;
+    Vector3 viewAngles;
     public Vector3 targetViewAngles;
+    Vector3 auxillaryViewAngles;  // Free look
     Vector3 origin;  // Point the camera rotates around
     public bool collide = false;
 
@@ -21,7 +22,6 @@ public class IsoCamera : MonoBehaviour
         if (instance == null)
             instance = this;
         camera = GetComponent<Camera>();
-        targetViewAngles = transform.rotation.eulerAngles;
     }
 
     private void LateUpdate()
@@ -31,7 +31,7 @@ public class IsoCamera : MonoBehaviour
 
         distance = Mathf.Clamp(distance, minDistance, maxDistance);
 
-        Vector3 lookAt = target.transform.position;
+        Vector3 lookAt;
         if (Director.Current.activeBattle != null)
         {
             lookAt = Director.Current.activeBattle.ActiveParty.party.GetCenter();
@@ -41,13 +41,33 @@ public class IsoCamera : MonoBehaviour
             lookAt = Client.Current.party.Leader.TileTransform.coordinates + Vector3.one / 2.0f + Vector3.up;
         }
 
-        origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);
+        origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);  // Smoothly adjust origin of the camera's orbit
 
-        targetViewAngles.y = Client.Current.party.FormationRotation + 180;
+        if (Input.GetMouseButton(1))  // Rotate camera with free look
+        {
+            if (Input.GetMouseButtonDown(1))
+            {
+                StartFreeLook();
+            }
 
-        viewAngles.y = Mathf.LerpAngle(viewAngles.y, targetViewAngles.y, Time.deltaTime * 5.0f);
+            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + Input.GetAxisRaw("Mouse Y") * 6.0f, 0, 60.0f);
+            auxillaryViewAngles.y += Input.GetAxisRaw("Mouse X") * 6.0f;
 
-        Vector3 targetPosition = origin + Quaternion.Euler(viewAngles ) * Vector3.forward * distance * 2.0f;
+            viewAngles = auxillaryViewAngles;
+        }
+        else  // Rotate camera with party direction
+        {
+            targetViewAngles.y = Client.Current.party.FormationRotation;
+            // As the camera zooms in closer, set X angle to 5
+            targetViewAngles.x = Utilities.MapRange(distance, minDistance, maxDistance, 5.0f, 45.0f);
+            viewAngles = new Vector3(
+                Mathf.LerpAngle(viewAngles.x, targetViewAngles.x, Time.deltaTime * 5.0f),
+                Mathf.LerpAngle(viewAngles.y, targetViewAngles.y, Time.deltaTime * 5.0f),
+                Mathf.LerpAngle(viewAngles.z, targetViewAngles.z, Time.deltaTime * 5.0f)
+                );   
+        }
+        
+        Vector3 cameraPosition = origin + Quaternion.Euler( viewAngles ) * -Vector3.forward * distance * 2.0f;
 
         //if (collide)
         //{
@@ -66,14 +86,13 @@ public class IsoCamera : MonoBehaviour
         //    }
         //}
 
-        transform.position = targetPosition;
-        transform.forward = Quaternion.Euler(viewAngles) * -Vector3.forward;
+        transform.position = cameraPosition;
+        transform.rotation = Quaternion.Euler(viewAngles);
         camera.orthographicSize = distance;
+    }
 
-        //// Alter fov based on distance to target
-        //float distanceToTarget = Vector3.Distance(transform.position, lookAt);
-        //float normValue = Mathf.Clamp01((distanceToTarget - maxFovDistance) / Mathf.Abs(maxFovDistance - minFovDistance));
-        //float targetFov = normValue * (minFov - maxFov) + maxFov;
-        //camera.fieldOfView = Mathf.Lerp(camera.fieldOfView, targetFov, Time.deltaTime * 10.0f);
+    void StartFreeLook()
+    {
+        auxillaryViewAngles = viewAngles;
     }
 }
