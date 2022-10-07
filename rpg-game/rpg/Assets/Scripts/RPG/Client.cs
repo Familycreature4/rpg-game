@@ -11,6 +11,7 @@ public class Client : MonoBehaviour
     public static Client Current => instance;
     static Client instance;
     public Party party;
+    public Input input = new Input();
     BoundsInt lastCameraBounds;
     private void Awake()
     {
@@ -25,6 +26,8 @@ public class Client : MonoBehaviour
     }
     private void Update()
     {
+        input.Update();
+
         #region PAWNS/PARTY
         if (party == null)
         {
@@ -34,38 +37,48 @@ public class Client : MonoBehaviour
         if (party == null)
             return;
 
+        bool didTurn = false;
+
         if (party.CanMove)
         {
-            if (Input.GetKey(KeyCode.Q))
+            if (input.turnLeft.Value)
             {
                 party.FormationRotation -= 90.0f;
-                party.Leader.InvokeMoveDelay();
+                //input.turnLeft.Consume();
+                didTurn = true;
             }
-            if (Input.GetKey(KeyCode.E))
+            if (input.turnRight.Value)
             {
                 party.FormationRotation += 90.0f;
-                party.Leader.InvokeMoveDelay();
+                //input.turnRight.Consume();
+                didTurn = true;
             }
         }
+
         int xMove = 0;
         int zMove = 0;
         
-        if (Input.GetKey(KeyCode.W))
+        if (input.forward.Value)
             zMove++;
-        if (Input.GetKey(KeyCode.S))
+        if (input.backward.Value)
             zMove--;
-        if (Input.GetKey(KeyCode.A))
+        if (input.left.Value)
             xMove--;
-        if (Input.GetKey(KeyCode.D))
+        if (input.right.Value)
             xMove++;
 
         Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
         party.Move(formationMove);
+
+        if (didTurn)
+        {
+            party.Leader.InvokeMoveDelay();
+        }
         #endregion
 
         #region CAMERA
-        IsoCamera.Current.distance -= Input.GetAxisRaw("Mouse ScrollWheel") * 4.0f;
-        if (Input.GetMouseButton(1))
+        IsoCamera.Current.targetDistance -= UnityEngine.Input.GetAxisRaw("Mouse ScrollWheel") * 4.0f;
+        if (UnityEngine.Input.GetMouseButton(1))
         {
             //IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
             //IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
@@ -73,7 +86,7 @@ public class Client : MonoBehaviour
         }
         #endregion
 
-        if (Input.GetKeyDown(KeyCode.Space) && Director.Current.activeBattle == null)
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Space) && Director.Current.activeBattle == null)
         {
             Director.Current.InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
         }

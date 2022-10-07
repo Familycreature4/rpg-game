@@ -9,7 +9,8 @@ namespace RPG
     [CreateAssetMenu(fileName = "Tile Shape", menuName = "RPG/Tile Shape")]
     public class TileShape : ScriptableObject
     {
-        static Dictionary<string, TileShape> shapes;
+        public static int Count => shapes.Count;
+        public static Dictionary<string, TileShape> shapes;
         public static void BuildShapes()
         {
             shapes = new Dictionary<string, TileShape>();
@@ -21,26 +22,25 @@ namespace RPG
             }
         }
         public static TileShape GetShape(string name) => shapes[name];
+        readonly static Plane[] planes = new Plane[6]
+        {
+            new Plane { normal = Vector3.forward, distance = 1},
+            new Plane { normal = Vector3.back, distance = 0},
+            new Plane { normal = Vector3.right, distance = 1},
+            new Plane { normal = Vector3.left, distance = 0},
+            new Plane { normal = Vector3.up, distance = 1},
+            new Plane { normal = Vector3.down, distance = 0}
+        };
 
         public Mesh mesh;
-        [HideInInspector]
+        [System.NonSerialized]
         public List<MeshGenerator.Vertex> vertices;
-        [HideInInspector]
-        public List<int> indices;  // Triangles that do not belong to a face (are not coplanar to any face)
-        [HideInInspector]
-        public Face[] faces;  // Correlates to the Tile neighbors array
+        [System.NonSerialized]
+        public List<int> indices;
+        [System.NonSerialized]
+        public int[] triangleFaces;
         public void Init()
         {
-            // Generate faces
-            faces = new Face[]
-            {
-            new Face(Vector3.forward, 1),   // Front
-            new Face(Vector3.back, 0),      // Back
-            new Face(Vector3.right, 1),     // Right
-            new Face(Vector3.left, 0),      // Left
-            new Face(Vector3.up, 1),        // Up
-            new Face(Vector3.down, 0),      // Down
-            };
             vertices = new List<MeshGenerator.Vertex>();
             indices = new List<int>();
 
@@ -48,7 +48,13 @@ namespace RPG
             Vector2[] uvs = mesh.uv;
             Vector3[] normals = mesh.normals;
 
-            for (int t = 0; t < (mesh.triangles.Length / 3); t++)
+            int triangleCount = mesh.triangles.Length / 3;
+            triangleFaces = new int[triangleCount];
+
+            for (int i = 0; i < triangleFaces.Length; i++)
+                triangleFaces[i] = -1;
+
+            for (int t = 0; t < triangleCount; t++)
             {
                 // Determine which face this triangle belongs to, if any
 
@@ -60,53 +66,28 @@ namespace RPG
                 Vector3 v2 = meshVertices[t1];
                 Vector3 v3 = meshVertices[t2];
 
-                Plane trianglePlane = new Plane(v1, v2, v3);
-
-                // Decide which list of indices to assign this triangle to
-                List<int> activeIndices = indices;
-                List<MeshGenerator.Vertex> activeVertices = vertices;
-
-                for (int d = 0; d < 6; d++)
+                bool IsCoplanar(ref Plane plane)
                 {
-                    Face face = faces[d];
-                    if (face.IsCoplanar(trianglePlane))  // If the triangle lies on the face
+                    Plane myPlane = new Plane(v1, v2, v3);
+                    return Mathf.Abs(myPlane.distance) == Mathf.Abs(plane.distance) && Mathf.Abs(Vector3.Dot(plane.normal, myPlane.normal)) == 1;
+                }
+
+                for (int i = 0; i < 6; i++)
+                {
+                    if (IsCoplanar(ref planes[i]))
                     {
-                        // Assign indices to this face
-                        activeIndices = face.indices;
-                        activeVertices = face.vertices;
-                        //Debug.DrawLine(v1, v2, Color.white, 10.0f);
-                        //Debug.DrawLine(v1, v3, Color.white, 10.0f);
-                        //Debug.DrawLine(v2, v3, Color.white, 10.0f);
-                        //Debug.DrawRay((v1 + v2 + v3) / 3.0f, Tile.neighbors[d], Color.yellow, 10.0f);
+                        triangleFaces[t] = i;
                         break;
                     }
                 }
 
-                activeIndices.Add(t0);
-                activeIndices.Add(t1);
-                activeIndices.Add(t2);
+                indices.Add(t0);
+                indices.Add(t1);
+                indices.Add(t2);
 
-                activeVertices.Add(new MeshGenerator.Vertex { position = v1, normal = normals[t0], uv = uvs[t0] });
-                activeVertices.Add(new MeshGenerator.Vertex { position = v2, normal = normals[t1], uv = uvs[t1] });
-                activeVertices.Add(new MeshGenerator.Vertex { position = v3, normal = normals[t2], uv = uvs[t2] });
-            }
-        }
-        public class Face
-        {
-            public Face(Vector3 normal, float distance)
-            {
-                indices = new List<int>();
-                vertices = new List<MeshGenerator.Vertex>();
-                plane = new Plane(normal, distance);
-            }
-
-            public List<int> indices;  // Triangles which are coplanar to this face
-            public List<MeshGenerator.Vertex> vertices;
-            Plane plane;
-
-            public bool IsCoplanar(Plane plane)
-            {
-                return Mathf.Abs(this.plane.distance) == Mathf.Abs(plane.distance) && Mathf.Abs(Vector3.Dot(plane.normal, this.plane.normal)) == 1;
+                vertices.Add(new MeshGenerator.Vertex { position = v1, normal = normals[t0], uv = uvs[t0] });
+                vertices.Add(new MeshGenerator.Vertex { position = v2, normal = normals[t1], uv = uvs[t1] });
+                vertices.Add(new MeshGenerator.Vertex { position = v3, normal = normals[t2], uv = uvs[t2] });
             }
         }
     }

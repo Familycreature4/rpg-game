@@ -47,7 +47,7 @@ namespace RPG
             {
                 walkableFunction = delegate (Vector3Int coord)
                 {
-                    return World.instance.IsSolid(coord) == false && World.instance.IsSolid(coord + Vector3Int.down);
+                    return World.Current.IsSolid(coord) == false && World.Current.IsSolid(coord + Vector3Int.down);
                 };
             }
 
@@ -92,7 +92,7 @@ namespace RPG
                         return true;
                     }
 
-                    Tile neighborWorldTile = World.instance.GetTile(neighborCoords);
+                    Tile neighborWorldTile = World.Current.GetTile(neighborCoords);
                     if (closedTiles.Contains(neighborCoords) || walkableFunction(neighborCoords) == false)
                         continue;
 
@@ -176,7 +176,7 @@ namespace RPG
             {
                 foreach (Vector3Int c in bounds.AllCoords())
                 {
-                    if (World.instance.IsSolid(c))
+                    if (World.Current.IsSolid(c))
                         return false;
                 }
             }
@@ -198,7 +198,7 @@ namespace RPG
         }
         public static bool IsWalkable(Vector3Int coord, Vector3Int size, CastFilter filter = CastFilter.World)
         {
-            return Overlap(coord, size, filter) && World.instance.IsSolid(coord + Vector3Int.down);
+            return Overlap(coord, size, filter) && World.Current.IsSolid(coord + Vector3Int.down);
         }
         public static bool TryGetTileTransform(Vector3Int coords, out TileTransform t)
         {

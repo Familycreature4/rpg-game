@@ -7,6 +7,7 @@ namespace RPG
     public class TileMaterial : ScriptableObject
     {
         public static Dictionary<string, TileMaterial> materials;
+        public static int Count => materials.Count;
         public static Texture2D atlas;
         public static void BuildMaterials()
         {

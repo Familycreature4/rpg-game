@@ -10,4 +10,8 @@ public static class Utilities
         float per = rangeAValue / Mathf.Abs(rangeAMax - rangeAMin);
         return per * dist + rangeBMin;
     }
+    public static float Mod(float x, float m)
+    {
+        return (x % m + m) % m;
+    }
 }

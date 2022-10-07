@@ -7,7 +7,7 @@ namespace RPG
     {
         public static void GenerateMap(Chunk chunk)
         {
-            Texture2D mapData = Resources.Load<Texture2D>($"Map/{World.instance.mapName}");
+            Texture2D mapData = Resources.Load<Texture2D>($"Map/{World.Current.mapName}");
 
             for (int i = 0; i < Chunk.sizeCubed; i++)
                 chunk.tiles[i] = Tile.Air;
@@ -35,7 +35,7 @@ namespace RPG
                         {
                             if (chunk.coords.y * Chunk.size + y <= 4)
                             {
-                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Slate Roof");
+                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Red Gravel");
                             }
                         }
                             

@@ -17,7 +17,7 @@ namespace RPG
             Pawn attackerPawn;
             public override void TurnThink()
             {
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (Client.Current.input.confirm.Value)
                 {
                     ExecuteAttacks();
                 }

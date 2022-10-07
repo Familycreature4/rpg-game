@@ -67,6 +67,7 @@ namespace RPG
         {
             public Vector2 UvMin => new Vector2(min.x / atlas.width, min.y / atlas.height);
             public Vector2 UvMax => new Vector2(max.x / atlas.width, max.y / atlas.height);
+            public Vector2 UvSize => new Vector2(Mathf.Abs(UvMax.x - UvMin.x), Mathf.Abs(UvMax.y - UvMin.y));
             public Vector2 min;
             public Vector2 max;
         }

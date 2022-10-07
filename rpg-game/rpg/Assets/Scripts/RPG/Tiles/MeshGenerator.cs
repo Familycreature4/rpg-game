@@ -25,24 +25,56 @@ namespace RPG
             List<Vertex> vertices = new List<Vertex>();
             List<int> indices = new List<int>();
 
-            void AddTriangles(List<int> otherIndices, List<Vertex> otherVertices, Vector3 offset, TileMaterial material)
+            void InsertMesh(ref Tile tile, ref Vector3Int localCoords)
             {
-                Atlas.Bounds bounds = Atlas.GetBounds((Texture2D)material.texture);
+                Atlas.Bounds bounds = Atlas.GetBounds((Texture2D)tile.material.texture);
 
-                foreach (Vertex vertex in otherVertices)
+                int solidMask = 0;
+                for (int i = 0; i < 6; i++)
                 {
-                    indices.Add(vertices.Count);
-                    Vertex newVertex = vertex;
+                    bool solid = World.Current.GetTile(localCoords + Vector3Int.RoundToInt(tile.rotation * Tile.neighbors[i]) + chunk.coords * Chunk.size).IsSolid;
+                    if (solid)
+                        solidMask |= 1 << i;
+                }
 
-                    newVertex.position = (vertex.position + offset);
-                    // Scale/offset uv
-                    // Remap the mesh uvs to the uv range in the material
-                    newVertex.uv = new Vector2(
-                        Utilities.MapRange(vertex.uv.x * material.uvScale.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
-                        Utilities.MapRange(vertex.uv.y * material.uvScale.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
-                    );
+                for (int t = 0; t < tile.shape.vertices.Count / 3; t++)
+                {
+                    int faceIndex = tile.shape.triangleFaces[t];
+                    // Check if adjacent block should be occluding this triangle
+                    if (faceIndex != -1 && ((1 << faceIndex) & solidMask) == (1 << faceIndex))
+                        continue;
 
-                    vertices.Add(newVertex);
+                    for (int v = 0; v < 3; v++)
+                    {
+                        Vertex vertex = tile.shape.vertices[t * 3 + v];
+                        indices.Add(vertices.Count);
+                        Vertex newVertex = vertex;
+
+                        newVertex.position = ((tile.rotation * (vertex.position - Vector3.one / 2.0f)) + Vector3.one / 2.0f + localCoords);
+
+                        // Scale/offset uv
+                        // Remap the mesh uvs to the uv range in the material
+
+                        Vector2 queryUv = vertex.uv;
+
+                        Vector2Int uvOffsets = new Vector2Int(
+                            (int)Utilities.Mod(localCoords.x + localCoords.y, 1.0f / (tile.material.uvScale.x)),
+                            (int)Utilities.Mod(localCoords.z + localCoords.y, 1.0f / (tile.material.uvScale.y))
+                        );
+
+                        queryUv += uvOffsets;
+
+                        queryUv.x *= tile.material.uvScale.x;
+                        queryUv.y *= tile.material.uvScale.y;
+
+                        newVertex.uv = new Vector2(
+                            Utilities.MapRange(queryUv.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
+                            Utilities.MapRange(queryUv.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
+                        );
+
+                        vertices.Add(newVertex);
+                    }
+                    
                 }
             }
 
@@ -72,21 +104,7 @@ namespace RPG
                 if (shape != null && IsNodraw(worldCoords) == false)  // If this tile has a mesh to insert
                 {
                     // Insert mesh
-                    Vector3 vertexOffset = (Vector3)localCoords;
-                    AddTriangles(shape.indices, shape.vertices, vertexOffset, tile.material);
-
-                    for (int d = 0; d < 6; d++)
-                    {
-                        // Get neighbor tile
-                        Vector3Int direction = Tile.neighbors[d];
-                        Vector3Int neighborCoords = worldCoords + direction;
-                        if (World.instance.IsSolid(neighborCoords) == false || IsNodraw(neighborCoords))  // If the neighbor is NOT solid
-                        {
-                            // Insert the triangles on this face
-                            AddTriangles(shape.faces[d].indices, shape.faces[d].vertices, vertexOffset, tile.material);
-                        }
-                    }
-
+                    InsertMesh(ref tile, ref localCoords);
                 }
             }
 

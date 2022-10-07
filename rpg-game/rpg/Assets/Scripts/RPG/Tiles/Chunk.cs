@@ -9,6 +9,7 @@ namespace RPG
         public const int sizeSquared = size * size;
         public const int sizeCubed = size * size * size;
 
+        [System.NonSerialized]
         public Tile[] tiles;
         public Vector3Int coords;
         public ChunkComponent component;

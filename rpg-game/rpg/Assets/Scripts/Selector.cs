@@ -19,21 +19,21 @@ public class Selector : MonoBehaviour
     }
     private void Update()
     {
-        Ray ray = Camera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = Camera.ScreenPointToRay(UnityEngine.Input.mousePosition);
         hits = Physics.RaycastAll(ray, 100.0f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
         System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
 
         if (hits.Length > 0)
         {
             GameObject ob = hits[0].collider.gameObject;
-            Selection selection = new Selection { gameObject = ob, mousePosition = Input.mousePosition };
+            Selection selection = new Selection { gameObject = ob, mousePosition = UnityEngine.Input.mousePosition };
 
             if (ob != lastSelectedObject)
             {
                 OnObjectStopHover?.Invoke();
                 OnObjectStartHover?.Invoke(selection);
             }
-            if (Input.GetMouseButtonDown(0))
+            if (UnityEngine.Input.GetMouseButtonDown(0))
             {
                 OnObjectSelect?.Invoke(selection);
             }

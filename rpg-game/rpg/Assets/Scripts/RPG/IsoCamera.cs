@@ -8,7 +8,8 @@ public class IsoCamera : MonoBehaviour
     static IsoCamera instance;
     public new Camera camera;
     public Transform target;
-    public float distance = 4.0f;
+    float distance = 4.0f;
+    public float targetDistance = 7.4f;
     float maxDistance = 7.4f;
     float minDistance = 1.0f;
     Vector3 viewAngles;
@@ -29,7 +30,8 @@ public class IsoCamera : MonoBehaviour
         if (camera == null || target == null)
             return;
 
-        distance = Mathf.Clamp(distance, minDistance, maxDistance);
+        targetDistance = Mathf.Clamp(targetDistance, minDistance, maxDistance);
+        distance = Mathf.Lerp(distance, targetDistance, Time.deltaTime * 20.0f);
 
         Vector3 lookAt;
         if (Director.Current.activeBattle != null)
@@ -43,15 +45,15 @@ public class IsoCamera : MonoBehaviour
 
         origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);  // Smoothly adjust origin of the camera's orbit
 
-        if (Input.GetMouseButton(1))  // Rotate camera with free look
+        if (UnityEngine.Input.GetMouseButton(1))  // Rotate camera with free look
         {
-            if (Input.GetMouseButtonDown(1))
+            if (UnityEngine.Input.GetMouseButtonDown(1))
             {
                 StartFreeLook();
             }
 
-            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + Input.GetAxisRaw("Mouse Y") * 6.0f, 0, 60.0f);
-            auxillaryViewAngles.y += Input.GetAxisRaw("Mouse X") * 6.0f;
+            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + UnityEngine.Input.GetAxisRaw("Mouse Y") * 6.0f, 0, 60.0f);
+            auxillaryViewAngles.y += UnityEngine.Input.GetAxisRaw("Mouse X") * 6.0f;
 
             viewAngles = auxillaryViewAngles;
         }

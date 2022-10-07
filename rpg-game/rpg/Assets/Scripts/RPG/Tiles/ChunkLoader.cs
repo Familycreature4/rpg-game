@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace RPG
 {
-    [UnityEngine.ExecuteInEditMode]
     public class ChunkLoader : MonoBehaviour
     {
         public BoundsInt Bounds
@@ -24,8 +23,8 @@ namespace RPG
         public Vector3Int size = new Vector3Int(2, 2, 2);
         private void Start()
         {
-            if (World.instance != null)
-                World.instance.loaders.Add(this);
+            if (World.Current != null)
+                World.Current.loaders.Add(this);
 
             Assert();
             lastChunkCoords = ChunkCoords;
@@ -42,12 +41,12 @@ namespace RPG
 
         void Assert()
         {
-            if (World.instance == null)
+            if (World.Current == null)
                 return;
 
             foreach (Vector3Int c in Bounds.allPositionsWithin)
             {
-                World.instance.AssertChunkLoader(c, this);
+                World.Current.AssertChunkLoader(c, this);
             }
         }
     }

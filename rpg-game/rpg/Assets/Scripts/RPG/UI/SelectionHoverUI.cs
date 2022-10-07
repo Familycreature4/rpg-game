@@ -31,7 +31,7 @@ namespace RPG.UI
         {
             if (GetComponent<Canvas>().enabled)
             {
-                CanvasRect.anchoredPosition = CanvasRect.worldToLocalMatrix * Input.mousePosition;
+                CanvasRect.anchoredPosition = CanvasRect.worldToLocalMatrix * UnityEngine.Input.mousePosition;
             }
         }
     }

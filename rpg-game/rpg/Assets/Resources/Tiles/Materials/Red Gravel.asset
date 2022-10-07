@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d2565e2468de214d9275a9d5c00320b, type: 3}
-  m_Name: Solid
+  m_Script: {fileID: 11500000, guid: 2c93d5bd4abdc244c93ae0557b6a7952, type: 3}
+  m_Name: Red Gravel
   m_EditorClassIdentifier: 
-  solid: 1
-  shape: {fileID: 11400000, guid: da9739741ba25164cb46e3bb622d1fdf, type: 2}
+  texture: {fileID: 2800000, guid: 1fae1070e240d8f4ca1f494c8e2375e6, type: 3}
+  uvScale: {x: 0.25, y: 0.25}
