@@ -63,6 +63,7 @@ namespace RPG.UI
             {
                 sheet.SetPawn(pawn);
                 sheet.GetComponent<Canvas>().enabled = true;
+                AudioManager.Current.PlayOneShot(AudioSet.GetRandomClip("Page Flip"));
             }
         }
     }

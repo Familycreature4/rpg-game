@@ -9,7 +9,6 @@ namespace RPG
         public const int sizeSquared = size * size;
         public const int sizeCubed = size * size * size;
 
-        [System.NonSerialized]
         public Tile[] tiles;
         public Vector3Int coords;
         public ChunkComponent component;
@@ -32,6 +31,11 @@ namespace RPG
         public static Vector3Int WorldToChunk(Vector3 world)
         {
             return Vector3Int.FloorToInt(world / size);
+        }
+        public void DirtyMesh()
+        {
+            if (component != null)
+                component.dirtyMesh = true;
         }
         public Tile GetTile(int x, int y, int z)
         {

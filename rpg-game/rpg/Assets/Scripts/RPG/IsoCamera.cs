@@ -2,32 +2,43 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using RPG;
-public class IsoCamera : MonoBehaviour
+public class IsoCamera : MonoBehaviour, Input.IInputReceiver
 {
     public static IsoCamera Current => instance;
     static IsoCamera instance;
     public new Camera camera;
-    public Transform target;
     float distance = 4.0f;
-    public float targetDistance = 7.4f;
-    float maxDistance = 7.4f;
+    float targetDistance = 7.4f;
+    float maxDistance = 4.0f;
     float minDistance = 1.0f;
+    bool useAuxillaryAngles = false;
     Vector3 viewAngles;
-    public Vector3 targetViewAngles;
+    Vector3 targetViewAngles;
     Vector3 auxillaryViewAngles;  // Free look
     Vector3 origin;  // Point the camera rotates around
-    public bool collide = false;
+    float moveSpeed = 10.0f;
+    bool collide = true;
 
     private void Awake()
     {
         if (instance == null)
             instance = this;
         camera = GetComponent<Camera>();
-    }
 
+        Client.Current.input.Subscribe(this);
+
+        // Disable auxillary angles if the party moves
+        Director.Current.onPartyMove += delegate (Party party)
+        {
+            if (party.IsClient)
+            {
+                useAuxillaryAngles = false;
+            }
+        };
+    }
     private void LateUpdate()
     {
-        if (camera == null || target == null)
+        if (camera == null)
             return;
 
         targetDistance = Mathf.Clamp(targetDistance, minDistance, maxDistance);
@@ -37,24 +48,17 @@ public class IsoCamera : MonoBehaviour
         if (Director.Current.activeBattle != null)
         {
             lookAt = Director.Current.activeBattle.ActiveParty.party.GetCenter();
+            useAuxillaryAngles = true;
         }
         else
         {
             lookAt = Client.Current.party.Leader.TileTransform.coordinates + Vector3.one / 2.0f + Vector3.up;
         }
 
-        origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * 20.0f);  // Smoothly adjust origin of the camera's orbit
+        origin = Vector3.Lerp(origin, lookAt, Time.deltaTime * moveSpeed);  // Smoothly adjust origin of the camera's orbit
 
-        if (UnityEngine.Input.GetMouseButton(1))  // Rotate camera with free look
+        if (useAuxillaryAngles)  // Rotate camera with free look
         {
-            if (UnityEngine.Input.GetMouseButtonDown(1))
-            {
-                StartFreeLook();
-            }
-
-            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + UnityEngine.Input.GetAxisRaw("Mouse Y") * 6.0f, 0, 60.0f);
-            auxillaryViewAngles.y += UnityEngine.Input.GetAxisRaw("Mouse X") * 6.0f;
-
             viewAngles = auxillaryViewAngles;
         }
         else  // Rotate camera with party direction
@@ -71,30 +75,54 @@ public class IsoCamera : MonoBehaviour
         
         Vector3 cameraPosition = origin + Quaternion.Euler( viewAngles ) * -Vector3.forward * distance * 2.0f;
 
-        //if (collide)
-        //{
-        //    Vector3 direction = (targetPosition - lookAt).normalized;
-        //    float length = (targetPosition - lookAt).magnitude;
-        //    RaycastHit[] hits = Physics.RaycastAll(lookAt, direction, length, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-        //    System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
-        //    foreach (RaycastHit hit in hits)
-        //    {
-        //        if (hit.collider.gameObject.GetComponent<World>())
-        //        {
-        //            float dot = Vector3.Dot(direction, hit.normal);
-        //            targetPosition = hit.point + (hit.normal * 0.125f) * (1.0f - Mathf.Abs(dot));
-        //            break;
-        //        }
-        //    }
-        //}
+        if (collide)
+        {
+            Vector3 direction = (cameraPosition - origin).normalized;
+            float length = (cameraPosition - origin).magnitude;
+            RaycastHit[] hits = Physics.SphereCastAll(origin, 0.1f, direction, length, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
+            foreach (RaycastHit hit in hits)
+            {
+                if (hit.collider.gameObject.GetComponent<RPG.ChunkComponent>())
+                {
+                    float dot = Vector3.Dot(direction, hit.normal);
+                    cameraPosition = origin + direction * hit.distance;
+                    //cameraPosition = hit.point + (hit.normal * 0.125f) * (1.0f - Mathf.Abs(dot));
+                    break;
+                }
+            }
+        }
 
         transform.position = cameraPosition;
         transform.rotation = Quaternion.Euler(viewAngles);
         camera.orthographicSize = distance;
     }
-
+    public void SetLookTarget(Vector3 target)
+    {
+        origin = target;
+    }
     void StartFreeLook()
     {
         auxillaryViewAngles = viewAngles;
     }
+    public void OnInputReceived(Input input)
+    {
+        if (input.rightClick.Pressed)
+        {
+            StartFreeLook();
+        }
+
+        if (input.rightClick.Value)
+        {
+            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + input.mouseY.Value * 6.0f, 0, 60.0f);
+            auxillaryViewAngles.y += input.mouseX.Value * 6.0f;
+            useAuxillaryAngles = true;
+        }
+
+        if (input.rightClick.Pressed)
+            input.rightClick.Consume();
+
+        this.targetDistance -= input.mouseScroll.Value * 4.0f;
+    }
+    public int GetInputPriority() => 100;
 }

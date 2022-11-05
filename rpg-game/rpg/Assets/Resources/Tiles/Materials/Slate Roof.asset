@@ -12,5 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c93d5bd4abdc244c93ae0557b6a7952, type: 3}
   m_Name: Slate Roof
   m_EditorClassIdentifier: 
-  texture: {fileID: 2800000, guid: 59b32ecbe1f99164c94b409d30638676, type: 3}
-  uvScale: {x: 0.25, y: 0.25}
+  diffuse: {fileID: 2800000, guid: 59b32ecbe1f99164c94b409d30638676, type: 3}
+  bump: {fileID: 0}
+  roughness: {fileID: 0}
+  specular: {fileID: 0}
+  normal: {fileID: 0}
+  roughnessFallback: 1
+  specularFallback: 0
+  deriveSpecularFromRoughness: 1
+  scale: {x: 1, y: 1}

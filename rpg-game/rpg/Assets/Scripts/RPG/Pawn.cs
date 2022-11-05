@@ -40,7 +40,6 @@ namespace RPG
         public System.Action<DamageInfo> OnDamageTaken;
         public System.Action onDeath;
         public new string name;
-        public string partyName;
         public Vector3Int Coordinates
         {
             get
@@ -63,7 +62,6 @@ namespace RPG
             inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
             //MoveToWalkableSpace();
             transform.position = TileTransform.coordinates + Vector3.one / 2.0f;
-            Party.AddToParty(partyName, this);
             health = maxHealth;
         }
         private void Update()
@@ -121,7 +119,26 @@ namespace RPG
                 return false;
 
             Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
-            Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
+            Vector3Int targetCoordinates = TileTransform.coordinates;
+
+            for (int c = 0; c < 3; c++)
+            {
+                // Travel across each component
+                for (int x = 1; x <= Mathf.Abs(displacement[c]); x++)
+                {
+                    Vector3Int disp = Vector3Int.zero;
+                    disp[c] += (int)Mathf.Sign(displacement[c]);
+                    
+                    if (CanStandHere(targetCoordinates + disp))
+                    {
+                        targetCoordinates += disp;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
 
             // To do: Give tiles flags (IE walkable, solid) instead
             // Test whether the coordinates are walkable
@@ -151,6 +168,11 @@ namespace RPG
         public void InvokeMoveDelay()
         {
             nextMoveTime = Time.time + moveDelay;
+        }
+        public void ResetState()
+        {
+            health = maxHealth;
+            gameObject.SetActive(true);
         }
         public void TakeDamage(DamageInfo damage)
         {

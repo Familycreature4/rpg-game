@@ -5,9 +5,33 @@ namespace RPG
 {
     public static class WorldGenerator
     {
+        readonly static Color32 dirt = new Color32(111, 92, 81, 255);
+        readonly static Color32 brick = new Color32(166, 166, 166, 255);
+        readonly static Color32 foliage = new Color32(8, 90, 0, 255);
+        readonly static Color32 playerParty = new Color32(0, 255, 0, 255);
+        readonly static Color32 enemyParty = new Color32(255, 0, 0, 255);
+        readonly static Vector2Int[] neighbors = new Vector2Int[4]
+        {
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1),
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0)
+        };
+        readonly static string[] trees = new string[]
+        {
+            "Tree Large 01",
+            "Tree Large 02",
+            "Tree Large 03",
+            //"Tree Large 04",
+            //"Tree Medium 01",
+            //"Tree Medium 02",
+            //"Tree Small 01"
+        };
         public static void GenerateMap(Chunk chunk)
         {
-            Texture2D mapData = Resources.Load<Texture2D>($"Map/{World.Current.mapName}");
+            Texture2D mapData = Resources.Load<Texture2D>($"Map/{"DEAD"}");
+            int brickHeight = 10;
+            int foliageHeight = 4;
 
             for (int i = 0; i < Chunk.sizeCubed; i++)
                 chunk.tiles[i] = Tile.Air;
@@ -24,31 +48,75 @@ namespace RPG
 
                     Color32 color = mapData.GetPixel(worldCoords.x, worldCoords.z);
 
-                    if (color.r == 0)
+                    for (int y = 0; y < Chunk.size; y++)
                     {
-                        // Empty, do nothing
-                    }
-                    else if (color.r == 145)
-                    {
-                        // Path, create tile below
-                        for (int y = 0; y < Chunk.size; y++)
+                        if (chunk.coords.y * Chunk.size + y <= 0)
                         {
-                            if (chunk.coords.y * Chunk.size + y <= 4)
+                            chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Grass 1");
+                        }
+                    }
+
+                    if (color.Equals(foliage))
+                    {
+                        // Check if all neighbors are air
+                        bool allAir = true;
+                        if (worldCoords.x == 0 || worldCoords.x == mapData.width - 1 || worldCoords.z == 0 || worldCoords.z == mapData.height - 1)
+                        {
+                            allAir = false;
+                        }
+                        else
+                        {
+                            foreach (Vector2Int neighbor in neighbors)
                             {
-                                chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Red Gravel");
+                                if (mapData.GetPixel(neighbor.x + worldCoords.x, neighbor.y + worldCoords.z).Equals(foliage))
+                                {
+                                    allAir = false;
+                                    break;
+                                }
                             }
                         }
-                            
+                        
+                        if (allAir)
+                        {
+                            if (chunk.coords.y == 0)
+                            {
+                                int index = Random.Range(0, trees.Length);
+                                World.Current.SpawnProp($"Foliage/{trees[index]}", worldCoords + Vector3Int.up, Quaternion.identity);
+                            }
+                        }
+                        else
+                        {
+                            for (int y = 0; y < Chunk.size; y++)
+                            {
+                                if (chunk.coords.y * Chunk.size + y <= foliageHeight)
+                                {
+                                    chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Hedge");
+                                }
+                            }
+                        }
+
+                        
                     }
-                    else if (color.r == 255)
+                    else if (color.Equals(brick))
                     {
-                        // Wall, create tile above and below
                         for (int y = 0; y < Chunk.size; y++)
                         {
-                            if (chunk.coords.y * Chunk.size + y <= 8)
+                            if (chunk.coords.y * Chunk.size + y <= brickHeight)
                             {
                                 chunk.tiles[Chunk.FlattenIndex(x, y, z)] = new Tile("Brick 2");
                             }
+                        }
+                    }
+
+                    if (chunk.coords.y == 0)
+                    {
+                        if (color.Equals(enemyParty))
+                        {
+                            Director.Current.SpawnParty(worldCoords + Vector3Int.up, true);
+                        }
+                        else if (color.Equals(playerParty))
+                        {
+                            Director.Current.SpawnParty(worldCoords + Vector3Int.up, false);
                         }
                     }
                 }

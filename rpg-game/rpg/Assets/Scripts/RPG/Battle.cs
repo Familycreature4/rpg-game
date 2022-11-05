@@ -1,10 +1,19 @@
 using System;
+using System.Collections.Generic;
 using RPG.Items;
+using UnityEngine;
 namespace RPG
 {
     /// <summary>
-    /// Stores the state of a battle among parties
+    /// Stores and manages the state of a battle among parties
     /// </summary>
+    /// 
+    /*
+    Gives control to each party as turns
+    Party in control returns a list of attacks to do
+    Battle then iterates through each attack
+    Give control to next, valid party
+     */
     public partial class Battle
     {
         public enum State
@@ -20,7 +29,10 @@ namespace RPG
                 Party party = parties[i];
                 BattleParty battleParty;
                 if (party.IsClient)
+                {
                     battleParty = new ClientBattle(party, this);
+                    activePartyIndex = i;
+                }
                 else
                     battleParty = new BotBattle(parties[i], this);
 
@@ -30,77 +42,115 @@ namespace RPG
             OnPartyTurn?.Invoke(ActiveParty);
         }
         public BattleParty ActiveParty => parties[activePartyIndex];
-        public Pawn ActivePawn => ActiveParty.party.pawns[activePawnIndex];
         public BattleParty[] parties;
         int activePartyIndex;
-        int activePawnIndex;
+        int currentAttackIndex;
         public State state;
         public Action<BattleParty> OnPartyTurn;  // Invoked when the active party is active
         public Action<BattleParty> OnPartyAttack;  // Invoked when the active party begins attack / Ends planning
         public Action<Battle> onBattleFinished;
+        List<AttackInfo> attacks;
+        float nextPawnAttackTime = 0.0f;
+        float nextPawnAttackDelay = 1.0f;
+        bool doAttacks = false;
+        bool firstAttacked = false;
+        bool secondAttacked = false;
         public void Update()
         {
-            ActiveParty.TurnThink();
-            ActiveParty.DebugAttacks();
+            ActiveParty?.TurnThink();
+            ActiveParty?.DebugAttacks();
+
+            AttackUpdate();
         }
         /// <summary>
-        /// Submits a party's attacks and executes them
+        /// Iterates over the current attacks
         /// </summary>
-        public void PartyAttack()
+        void AttackUpdate()
         {
-            foreach (AttackInfo attack in ActiveParty.Attacks)
+            if (doAttacks)
             {
-                if (attack.attacker.IsDead)
-                    continue;
-
-                // Have both attacker and target attack
-                // Whoever is faster will attack first
-
-                int attackerSpeed = attack.attacker.stats.GetStat( Statistic.Type.Speed ).Value;
-                int targetSpeed = attack.target.stats.GetStat(Statistic.Type.Speed).Value;
-
-                Pawn first = attack.attacker;
-                Pawn second = attack.target;
-
-                if (attackerSpeed < targetSpeed)
+                if (currentAttackIndex >= attacks.Count)  // If all attacks have been processed for this party's turn
                 {
-                    first = attack.target;
-                    second = attack.attacker;
+                    // Check if a party is dead after attacks
+                    doAttacks = false;
+
+                    OnPartyAttack?.Invoke(ActiveParty);
+
+                    // Check if this is the last party standing
+                    bool allDead = true;
+                    foreach (BattleParty party in parties)
+                    {
+                        if (party == ActiveParty)
+                            continue;
+
+                        if (party.AllDead == false)
+                        {
+                            allDead = false;
+                            break;
+                        }
+                    }
+
+                    if (allDead)
+                    {
+                        // ENd battle, this party WINS!!! >?:)
+                        EndBattle();
+                    }
+                    else
+                    {
+                        NextTurn();
+                    }
+
                 }
-
-                first.GetWeapon()?.Attack(second);
-
-                if (second.IsDead)
-                    continue;
-
-                second.GetWeapon()?.Attack(first);
-            }
-
-            OnPartyAttack?.Invoke(ActiveParty);
-
-            // Check if this is the last party standing
-            bool allDead = true;
-            foreach (BattleParty party in parties)
-            {
-                if (party == ActiveParty)
-                    continue;
-
-                if (party.AllDead == false)
+                else if (nextPawnAttackTime <= Time.time)
                 {
-                    allDead = false;
-                    break;
+                    AttackInfo attack = attacks[currentAttackIndex];
+
+                    if (attack.attacker.IsDead == false && attack.target.IsDead == false)
+                    {
+                        // Have both attacker and target attack
+                        // Whoever is faster will attack first
+
+                        int attackerSpeed = attack.attacker.stats.GetStat(Statistic.Type.Speed).Value;
+                        int targetSpeed = attack.target.stats.GetStat(Statistic.Type.Speed).Value;
+
+                        Pawn first = attack.attacker;
+                        Pawn second = attack.target;
+
+                        if (attackerSpeed < targetSpeed)
+                        {
+                            first = attack.target;
+                            second = attack.attacker;
+                        }
+
+                        if (firstAttacked == false)
+                        {
+                            first.GetWeapon()?.Attack(second);
+                            firstAttacked = true;
+                            nextPawnAttackTime = Time.time + nextPawnAttackDelay;
+                        }
+                        else if (secondAttacked == false)
+                        {
+                            second.GetWeapon()?.Attack(first);
+                            secondAttacked = true;
+                            nextPawnAttackTime = Time.time + nextPawnAttackDelay;
+                        }
+                    }
+
+                    if ((firstAttacked && secondAttacked) || (attack.attacker.IsDead || attack.target.IsDead))  // If attacks were made or cannot be done, go to next attack
+                    {
+                        // Increment to next attack
+                        currentAttackIndex++;
+                        firstAttacked = false;
+                        secondAttacked = false;
+                    }
                 }
             }
-
-            if (allDead)
-            {
-                // ENd battle, this party WINS!!! >?:)
-                EndBattle();
-            }
-            else
-            {
-                NextTurn();
-            }
+        }
+        public void StartAttacks(List<AttackInfo> attacks)
+        {
+            this.attacks = attacks;
+            currentAttackIndex = 0;
+            doAttacks = true;
         }
         void EndBattle()
         {
@@ -111,6 +161,7 @@ namespace RPG
         /// </summary>
         void NextTurn()
         {
+            Debug.Log("NEXT TRUN");
             activePartyIndex++;
             if (activePartyIndex >= parties.Length)
                 activePartyIndex = 0;

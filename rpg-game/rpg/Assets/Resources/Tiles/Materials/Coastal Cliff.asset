@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c93d5bd4abdc244c93ae0557b6a7952, type: 3}
+  m_Name: Coastal Cliff
+  m_EditorClassIdentifier: 
+  diffuse: {fileID: 2800000, guid: 9c3ae31a3f5e8004b838172f2d49346d, type: 3}
+  bump: {fileID: 0}
+  roughness: {fileID: 2800000, guid: 3da4959a922992b4f85f3ee7832f29ef, type: 3}
+  specular: {fileID: 0}
+  normal: {fileID: 2800000, guid: 6e89684c899e9544f9a8f5acdbbb9a24, type: 3}
+  roughnessFallback: 1
+  specularFallback: 0
+  deriveSpecularFromRoughness: 1
+  scale: {x: 1, y: 1}

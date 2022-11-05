@@ -4,10 +4,31 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
+    public static AudioManager Current
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = GameObject.FindObjectOfType<AudioManager>();
+            }
+
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            return null;
+        }
+    }
+    static AudioManager instance;
     AudioSource audiosource;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        if (instance == null)
+            instance = this;
+
         audiosource = GetComponent<AudioSource>();
         AudioClip clip = Resources.Load<AudioClip>("Audio/Music/plexlab");
         audiosource.clip = clip;
@@ -24,5 +45,9 @@ public class AudioManager : MonoBehaviour
         }
 ;
 
+    }
+    public void PlayOneShot(AudioClip clip, float volumeScale = 1.0f)
+    {
+        audiosource.PlayOneShot(clip, volumeScale);
     }
 }

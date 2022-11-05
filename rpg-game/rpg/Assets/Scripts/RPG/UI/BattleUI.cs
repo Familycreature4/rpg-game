@@ -11,7 +11,7 @@ namespace RPG.UI
         {
             Director.Current.OnBattlePartyTurn += OnPartyTurn;
             Director.Current.OnBattleStart += OnBattleStart;
-            Director.Current.onBattleEnd += OnBattleEnd;
+            Director.Current.OnBattleEnd += OnBattleEnd;
             GetComponent<Canvas>().enabled = false;
         }
         void OnPartyTurn(Battle.BattleParty battleParty)

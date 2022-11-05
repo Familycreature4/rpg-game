@@ -84,19 +84,21 @@ namespace RPG
             
         }
         public bool Contains(Pawn p) => pawns.Contains(p);
-        public void Move(Vector3Int displacement)
+        public bool Move(Vector3Int displacement)
         {
             if (displacement.magnitude == 0)
-                return;
-            if (Director.Current.state == Director.State.Combat)
-                return;
+                return false;
 
-            Leader.Move(displacement);
-            //if (Leader.CanMove)
-            //{
-            //    FormationRotation = Quaternion.LookRotation(displacement).eulerAngles.y;
-            //    Leader.InvokeMoveDelay();
-            //}
+            if (Director.Current.state == Director.State.Combat)
+                return false;
+
+            if (Leader.Move(displacement))
+            {
+                Director.Current.OnPartyMove(this);
+                return true;
+            }
+
+            return false;
         }
     }
 }

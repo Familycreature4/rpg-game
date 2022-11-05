@@ -45,7 +45,10 @@ namespace RPG
             }
             public void ExecuteAttacks()
             {
-                battle.PartyAttack();
+                List<AttackInfo> attacks = new List<AttackInfo>(this.attacks.Count);
+                foreach (AttackInfo a in Attacks)
+                    attacks.Add(a);
+                battle.StartAttacks(attacks);
             }
             /// <summary>
             /// Called when it is the party's turn. Gives control to next party

@@ -27,7 +27,7 @@ namespace RPG
 
             void InsertMesh(ref Tile tile, ref Vector3Int localCoords)
             {
-                Atlas.Bounds bounds = Atlas.GetBounds((Texture2D)tile.material.texture);
+                Atlas.Bounds bounds = TileMaterial.atlas != null ? TileMaterial.atlas.GetBounds(tile.material) : default;
 
                 int solidMask = 0;
                 for (int i = 0; i < 6; i++)
@@ -44,6 +44,24 @@ namespace RPG
                     if (faceIndex != -1 && ((1 << faceIndex) & solidMask) == (1 << faceIndex))
                         continue;
 
+                    Vector3 normal = Vector3.Cross(
+                        (tile.shape.vertices[t * 3 + 1].position - tile.shape.vertices[t * 3].position).normalized,
+                        ((tile.shape.vertices[t * 3 + 2].position - tile.shape.vertices[t * 3].position).normalized)).normalized;
+
+                    float up = Mathf.Abs(Vector3.Dot(Vector3.up, normal));
+                    float right = Mathf.Abs(Vector3.Dot(Vector3.right, normal));
+                    float forward = Mathf.Abs(Vector3.Dot(Vector3.forward, normal));
+
+                    Vector3 directions = new Vector3(right, up, forward);
+
+                    float uOffset = Vector3.Dot(directions, new Vector3(localCoords.z, localCoords.x, localCoords.x));
+                    float vOffset = Vector3.Dot(directions, new Vector3(localCoords.y, localCoords.z, localCoords.y));
+
+                    Vector2Int uvOffsets = new Vector2Int(
+                        (int)Utilities.Mod(uOffset, (tile.material.diffuse.width / 128.0f)),
+                        (int)Utilities.Mod(vOffset, (tile.material.diffuse.height / 128.0f))
+                    );
+
                     for (int v = 0; v < 3; v++)
                     {
                         Vertex vertex = tile.shape.vertices[t * 3 + v];
@@ -55,21 +73,17 @@ namespace RPG
                         // Scale/offset uv
                         // Remap the mesh uvs to the uv range in the material
 
-                        Vector2 queryUv = vertex.uv;
+                        Vector2 queryUv = vertex.uv + uvOffsets;
 
-                        Vector2Int uvOffsets = new Vector2Int(
-                            (int)Utilities.Mod(localCoords.x + localCoords.y, 1.0f / (tile.material.uvScale.x)),
-                            (int)Utilities.Mod(localCoords.z + localCoords.y, 1.0f / (tile.material.uvScale.y))
-                        );
+                        queryUv.x /= tile.material.scale.x * (tile.material.diffuse.width / 128.0f);
+                        queryUv.y /= tile.material.scale.y * (tile.material.diffuse.height / 128.0f);
 
-                        queryUv += uvOffsets;
-
-                        queryUv.x *= tile.material.uvScale.x;
-                        queryUv.y *= tile.material.uvScale.y;
+                        int atlasWidth = TileMaterial.atlas == null ? 128 : TileMaterial.atlas.diffuseTexture.width;
+                        int atlasHeight = TileMaterial.atlas == null ? 128 : TileMaterial.atlas.diffuseTexture.height;
 
                         newVertex.uv = new Vector2(
-                            Utilities.MapRange(queryUv.x, 0, 1.0f, bounds.UvMin.x, bounds.UvMax.x),
-                            Utilities.MapRange(queryUv.y, 0, 1.0f, bounds.UvMin.y, bounds.UvMax.y)
+                            Utilities.MapRange(queryUv.x, 0, 1.0f, bounds.min.x / atlasWidth, bounds.max.x / atlasWidth),
+                            Utilities.MapRange(queryUv.y, 0, 1.0f, bounds.min.y / atlasHeight, bounds.max.y / atlasHeight)
                         );
 
                         vertices.Add(newVertex);

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace RPG.Editor
 {
-    public class EditorCamera : MonoBehaviour
+    public class EditorCamera : MonoBehaviour, Input.IInputReceiver
     {
-        Tile Tile => new Tile { material = CurrentMaterial, shape = CurrentShape, rotation = RoundedRotation };
+        Tile Tile => new Tile { material = CurrentMaterial, shape = CurrentShape, rotation = rotateShapes ? RoundedRotation : Quaternion.identity };
         TileShape CurrentShape
         {
             get
@@ -55,52 +55,19 @@ namespace RPG.Editor
         int shapeIndex;
         public System.EventHandler<TileMaterial> materialChanged;
         public System.EventHandler<TileShape> shapeChanged;
+        Vector3 cursorPosition;
+        float cursorDistance = 8.0f;
+        bool rotateShapes = false;
         private void Awake()
         {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+
+            Client.Current.input.Subscribe(this);
         }
         private void Update()
         {
             Move();
-
-            if (UnityEngine.Input.GetMouseButtonDown(0))
-            {
-                if (EyeCast(out RaycastHit hit))
-                {
-                    World.Current.SetTile(Vector3Int.FloorToInt(hit.point - hit.normal * 0.1f), Tile.Air);
-                }
-            }
-
-            int oldShapeIndex = shapeIndex;
-            int oldMaterialIndex = materialIndex;
-
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Period))
-                shapeIndex++;
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Comma))
-                shapeIndex--;
-
-            if (UnityEngine.Input.GetKeyDown(KeyCode.E))
-                materialIndex++;
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Q))
-                materialIndex--;
-
-            if (oldShapeIndex != shapeIndex)
-                shapeChanged?.Invoke(this, CurrentShape);
-
-            if (oldMaterialIndex != materialIndex)
-                materialChanged?.Invoke(this, CurrentMaterial);
-
-            shapeIndex = (int)Utilities.Mod(shapeIndex, TileShape.Count);
-            materialIndex = (int)Utilities.Mod(materialIndex, TileMaterial.Count);
-
-            if (UnityEngine.Input.GetMouseButtonDown(1))
-            {
-                if (EyeCast(out RaycastHit hit))
-                {
-                    World.Current.SetTile(Vector3Int.FloorToInt(hit.point + hit.normal * 0.1f), Tile);
-                }
-            }
         }
         void Move()
         {
@@ -132,7 +99,7 @@ namespace RPG.Editor
         }
         RaycastHit[] EyeCast()
         {
-            RaycastHit[] hits = Physics.RaycastAll(transform.position, Quaternion.Euler(eyeAngles) * Vector3.forward, 100.0f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = Physics.RaycastAll(transform.position, Quaternion.Euler(eyeAngles) * Vector3.forward, cursorDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
 
             return hits;
@@ -147,6 +114,52 @@ namespace RPG.Editor
 
             hit = hits[0];
             return true;
+        }
+
+        public void OnInputReceived(Input input)
+        {
+            if (EyeCast(out RaycastHit hit))
+            {
+                cursorPosition = hit.point;
+            }
+            else
+            {
+                cursorPosition = transform.position + Quaternion.Euler(eyeAngles) * Vector3.forward * cursorDistance;
+            }
+
+            if (input.leftClick.Pressed)
+            {
+                Vector3Int coords = hit.collider == null ? Vector3Int.FloorToInt(cursorPosition) : Vector3Int.FloorToInt(hit.point - hit.normal * 0.1f);
+                World.Current.SetTile(coords, Tile.Air);
+            }
+
+            int oldShapeIndex = shapeIndex;
+            int oldMaterialIndex = materialIndex;
+
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Period))
+                shapeIndex++;
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Comma))
+                shapeIndex--;
+
+            if (UnityEngine.Input.GetKeyDown(KeyCode.E))
+                materialIndex++;
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Q))
+                materialIndex--;
+
+            if (oldShapeIndex != shapeIndex)
+                shapeChanged?.Invoke(this, CurrentShape);
+
+            if (oldMaterialIndex != materialIndex)
+                materialChanged?.Invoke(this, CurrentMaterial);
+
+            shapeIndex = (int)Utilities.Mod(shapeIndex, TileShape.Count);
+            materialIndex = (int)Utilities.Mod(materialIndex, TileMaterial.Count);
+
+            if (input.rightClick.Pressed)
+            {
+                Vector3Int coords = hit.collider == null ? Vector3Int.FloorToInt(cursorPosition) : Vector3Int.FloorToInt(hit.point + hit.normal * 0.1f);
+                World.Current.SetTile(coords, Tile);
+            }
         }
     }
 }

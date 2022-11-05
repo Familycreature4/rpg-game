@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c93d5bd4abdc244c93ae0557b6a7952, type: 3}
+  m_Name: Basalt Cliff
+  m_EditorClassIdentifier: 
+  diffuse: {fileID: 2800000, guid: 2d5954497faf10c4598647b5ccc9b4ba, type: 3}
+  bump: {fileID: 0}
+  roughness: {fileID: 2800000, guid: 662eb13d00be9484fb2f4a436449e0f8, type: 3}
+  specular: {fileID: 0}
+  normal: {fileID: 2800000, guid: f5cf17201c6abeb459bd0648cdc2c4a6, type: 3}
+  roughnessFallback: 1
+  specularFallback: 0
+  deriveSpecularFromRoughness: 1
+  scale: {x: 1, y: 1}

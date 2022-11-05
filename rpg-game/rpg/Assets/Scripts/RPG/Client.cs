@@ -6,13 +6,15 @@ using RPG;
 /// <summary>
 /// Couples the user to the game
 /// </summary>
-public class Client : MonoBehaviour
+public class Client : MonoBehaviour, Input.IInputReceiver
 {
     public static Client Current => instance;
     static Client instance;
     public Party party;
     public Input input = new Input();
     BoundsInt lastCameraBounds;
+    Vector3Int savedMove;
+    float savedRotation;
     private void Awake()
     {
         if (instance != null)
@@ -23,72 +25,86 @@ public class Client : MonoBehaviour
         {
             instance = this;
         }
+
+        input.Subscribe(this);
     }
     private void Update()
     {
         input.Update();
 
-        #region PAWNS/PARTY
         if (party == null)
         {
-            party = Party.GetParty("0");
+            party = Party.GetParty("PLAYER");
         }
+    }
 
+    public void OnInputReceived(Input input)
+    {
+        #region PAWNS/PARTY
+        
         if (party == null)
             return;
 
         bool didTurn = false;
 
+        if (input.turnLeft.Pressed)
+        {
+            savedRotation -= 90.0f;
+        }
+        if (input.turnRight.Pressed)
+        {
+            savedRotation += 90.0f;
+        }
+
+        savedRotation = Mathf.Clamp(savedRotation % 360.0f, -90f, 90f);
+
         if (party.CanMove)
         {
-            if (input.turnLeft.Value)
+            if (input.forward.Value)
             {
-                party.FormationRotation -= 90.0f;
-                //input.turnLeft.Consume();
-                didTurn = true;
+                savedMove.z++;
+                input.forward.Consume();
             }
-            if (input.turnRight.Value)
+            if (input.backward.Value)
             {
-                party.FormationRotation += 90.0f;
-                //input.turnRight.Consume();
-                didTurn = true;
+                savedMove.z--;
+                input.backward.Consume();
+            }
+            if (input.left.Value)
+            {
+                savedMove.x--;
+                input.left.Consume();
+            }
+            if (input.right.Value)
+            {
+                savedMove.x++;
+                input.right.Consume();
             }
         }
-
-        int xMove = 0;
-        int zMove = 0;
         
-        if (input.forward.Value)
-            zMove++;
-        if (input.backward.Value)
-            zMove--;
-        if (input.left.Value)
-            xMove--;
-        if (input.right.Value)
-            xMove++;
 
-        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * new Vector3(xMove, 0, zMove));
-        party.Move(formationMove);
+        for (int c = 0; c < 3; c++)
+        {
+            savedMove[c] = Mathf.Clamp(savedMove[c], -1, 1);
+        }
 
-        if (didTurn)
+        if (savedRotation != 0 && party.CanMove)
+        {
+            party.FormationRotation += savedRotation;
+            didTurn = true;
+        }
+
+        Vector3Int formationMove = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * savedMove);
+        bool moved = party.Move(formationMove);
+
+        if (didTurn || moved)
         {
             party.Leader.InvokeMoveDelay();
+
+            savedMove = Vector3Int.zero;
+            savedRotation = 0.0f;
         }
         #endregion
-
-        #region CAMERA
-        IsoCamera.Current.targetDistance -= UnityEngine.Input.GetAxisRaw("Mouse ScrollWheel") * 4.0f;
-        if (UnityEngine.Input.GetMouseButton(1))
-        {
-            //IsoCamera.Current.viewAngles.y += Input.GetAxisRaw("Mouse X") * 15.0f;
-            //IsoCamera.Current.viewAngles.x -= Input.GetAxisRaw("Mouse Y") * 15.0f;
-            //IsoCamera.Current.viewAngles.x = Mathf.Clamp(IsoCamera.Current.viewAngles.x, -60, 1);
-        }
-        #endregion
-
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Space) && Director.Current.activeBattle == null)
-        {
-            Director.Current.InitiateBattle(Party.GetParty("0"), Party.GetParty("1"));
-        }
     }
+    public int GetInputPriority() => int.MaxValue;
 }

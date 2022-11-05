@@ -12,5 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c93d5bd4abdc244c93ae0557b6a7952, type: 3}
   m_Name: Clay
   m_EditorClassIdentifier: 
-  texture: {fileID: 2800000, guid: 1b12977aac5c994449ac79940ead2b3a, type: 3}
-  uvScale: {x: 1, y: 1}
+  diffuse: {fileID: 2800000, guid: 1b12977aac5c994449ac79940ead2b3a, type: 3}
+  bump: {fileID: 2800000, guid: 5d3317b8a94df7940b3f1762ad1f5f67, type: 3}
+  roughness: {fileID: 0}
+  specular: {fileID: 0}
+  normal: {fileID: 0}
+  roughnessFallback: 1
+  specularFallback: 0
+  deriveRoughnessFromSpecular: 1
+  scale: {x: 1, y: 1}

@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="FileGroup" style="height: auto; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgb(67, 67, 67); border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; margin-left: 5px; margin-right: 5px; margin-top: 5px; margin-bottom: 5px; width: 250px; flex-direction: column; min-width: auto; justify-content: flex-start; flex-shrink: initial; flex-wrap: nowrap;">
+        <ui:Label text="Untitled Tile Assembly" display-tooltip-when-elided="true" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0;" />
+        <ui:TextField picking-mode="Ignore" label="Text Field" value="filler text" text="filler text" style="-unity-text-align: upper-left; align-items: center;" />
+        <ui:Button text="Save" display-tooltip-when-elided="true" />
+        <ui:Button text="Load" display-tooltip-when-elided="true" />
+    </ui:VisualElement>
+</ui:UXML>
