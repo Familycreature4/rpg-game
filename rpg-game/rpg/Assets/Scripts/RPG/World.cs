@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace RPG
 {
+    [UnityEngine.ExecuteInEditMode]
     public class World : MonoBehaviour
     {
         // The 'static' modifier will assign the given property/field/method to the class TYPE instead of a given instance of the class
@@ -22,62 +23,52 @@ namespace RPG
             }
         }
         static World instance;  // Singleton pattern
-        public Dictionary<Vector3Int, Chunk> chunks;
-        public HashSet<ChunkLoader> loaders;
+        public Dictionary<Vector3Int, Chunk> Chunks { get { return chunks; } }
+        Dictionary<Vector3Int, Chunk> chunks;
         private void Awake()
         {
+            if (instance == null)
+            {
+                instance = this;
+            }
             TileMaterial.BuildMaterials();
             TileShape.BuildShapes();
 
-            if (RPG.Editor.Serializer.LoadWorldJSON("world", this) == false)
+            if (chunks == null)
+            {
+                Debug.Log("Creating new chunks dictionary in AWAKE method");
                 chunks = new Dictionary<Vector3Int, Chunk>();
-            if (loaders == null)
-                loaders = new HashSet<ChunkLoader>();
+            }
         }
         private void OnDestroy()
         {
-            RPG.Editor.Serializer.SaveWorldJSON("world", this);
-            //RPG.Editor.Serializer.SaveWorld("world", this);
+            ClearChunks();
         }
-        private void LateUpdate()
+        private void Update()
         {
+            if (chunks == null)
+                return;
+
             foreach (Chunk chunk in chunks.Values)
-                UpdateChunk(chunk);
-        }
-        public void UpdateChunk(Chunk chunk)
-        {
-            //bool visible = false;
-            //foreach (ChunkLoader loader in loaders)
-            //{
-            //    BoundsInt bounds = loader.Bounds;
-            //    if (bounds.Contains(chunk.coords))
-            //    {
-            //        visible = true;
-            //        break;
-            //    }
-            //}
-
-            if (chunk.component != null)
             {
-                if (chunk.component.dirtyMesh)
+                if (chunk != null)
+                    UpdateChunk(chunk);
+            }
+        }
+        void UpdateChunk(Chunk chunk)
+        {
+            if (chunk.IsDirty)
+            {
+                // Get (or create) a gameobject representation of this chunk
+                if (chunk.component == null)
                 {
-                    chunk.component.dirtyMesh = false;
-                    MeshGenerator.Generate(chunk);
+                    CreateChunkComponent(chunk);
                 }
-            }
-        }
-        public void AssertChunkLoader(Vector3Int coords, ChunkLoader loader)
-        {
-            if (chunks.TryGetValue(coords, out Chunk chunk))
-            {
 
+                MeshGenerator.Generate(chunk);
+                chunk.IsDirty = false;
             }
-            else
-            {
-                chunk = CreateChunk(coords);
-                CreateChunkComponent(chunk);
-            }
-
+            
         }
         /// <summary>
         /// Returns the tile at world coordinates x, y, z
@@ -103,18 +94,17 @@ namespace RPG
             if (chunks.TryGetValue(chunkCoords, out Chunk chunk) == false)
             {
                 chunk = CreateChunk(chunkCoords);
-                CreateChunkComponent(chunk);
             }
 
             Vector3Int local = Chunk.WorldToLocal(worldCoords);
             chunk.tiles[Chunk.FlattenIndex(local.x, local.y, local.z)] = tile;
-            chunk.DirtyMesh();
+            chunk.IsDirty = true;
 
             void TryUpdate(Vector3Int coords)
             {
                 if (World.Current.chunks.TryGetValue(coords, out Chunk neighbor))
                 {
-                    neighbor.DirtyMesh();
+                    neighbor.IsDirty = true;
                 }
             }
 
@@ -148,7 +138,7 @@ namespace RPG
             Tile tile = GetTile(coords);
             return tile.IsSolid;
         }
-        public Chunk CreateChunk(Vector3Int chunkCoords)
+        Chunk CreateChunk(Vector3Int chunkCoords)
         {
             Chunk chunk = new Chunk();
             chunk.coords = chunkCoords;
@@ -157,9 +147,10 @@ namespace RPG
             
             return chunk;
         }
-        public ChunkComponent CreateChunkComponent(Chunk chunk)
+        ChunkComponent CreateChunkComponent(Chunk chunk)
         {
             GameObject chunkObject = new GameObject(chunk.coords.ToString());
+            chunkObject.hideFlags = HideFlags.HideAndDontSave;
             chunkObject.transform.parent = this.transform;
             ChunkComponent component = chunkObject.AddComponent<ChunkComponent>();
             component.gameObject.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Atlas");
@@ -168,18 +159,42 @@ namespace RPG
             component.chunk = chunk;
             chunk.component = component;
             chunkObject.transform.position = chunk.coords * Chunk.size;
-
-            MeshGenerator.Generate(chunk);
             return component;
         }
         public void SetChunks(Dictionary<Vector3Int, Chunk> chunks)
         {
+            // Clear existing chunks
+            ClearChunks();
+
             this.chunks = chunks;
 
             foreach (Chunk chunk in chunks.Values)
             {
                 CreateChunkComponent(chunk);
+                chunk.IsDirty = true;
             }
+        }
+        public void ClearChunks()
+        {
+            for (int c = transform.childCount - 1; c >= 0; c--)
+            {
+                Transform child = transform.GetChild(c);
+
+                if (child.gameObject.GetComponent<ChunkComponent>() != null)
+                {
+                    if (Application.isEditor)
+                    {
+                        GameObject.DestroyImmediate(child.gameObject);
+                    }
+                    else
+                    {
+                        GameObject.Destroy(child.gameObject);
+                    }
+                }
+            }
+
+            if (chunks != null)
+                chunks.Clear();
         }
         public TileTransform SpawnProp(string prefabName, Vector3Int coords, Quaternion rotation = default)
         {

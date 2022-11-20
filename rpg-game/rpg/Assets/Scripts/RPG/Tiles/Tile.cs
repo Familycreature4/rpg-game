@@ -21,6 +21,12 @@ namespace RPG
             material = TileMaterial.GetMaterial(mat);
             rotation = Quaternion.identity;
         }
+        public Tile(TileMaterial mat)
+        {
+            shape = TileShape.GetShape("Cube");
+            material = mat;
+            rotation = Quaternion.identity;
+        }
         public bool IsSolid => material != null && shape != null;
         public TileShape shape;
         public TileMaterial material;

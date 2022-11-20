@@ -6,7 +6,7 @@ namespace CameraControllers
     /// <summary>
     /// Manipulates the Player's Camera component
     /// </summary>
-    public class CameraController
+    public class CameraController : Input.IInputReceiver
     {
         public CameraController()
         {
@@ -22,6 +22,19 @@ namespace CameraControllers
         public virtual void LateUpdate()
         {
 
+        }
+        public virtual void ReceiveInput(Input.Input input)
+        {
+
+        }
+        public void OnInputReceived(Input.Input input)
+        {
+            ReceiveInput(input);
+        }
+
+        public int GetInputPriority()
+        {
+            return 10000;
         }
     }
 

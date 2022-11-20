@@ -7,30 +7,28 @@ namespace RPG
     public class TileMaterial : ScriptableObject
     {
         public static Dictionary<string, TileMaterial> materials;
+        public static string[] materialKeys;
         public static int Count => materials.Count;
-        public static Atlas atlas;
         public static void BuildMaterials()
         {
             materials = new Dictionary<string, TileMaterial>();
 
-            foreach (TileMaterial mat in Resources.LoadAll<TileMaterial>("Tiles/Materials"))
+            TileMaterial[] tileMaterials = Resources.LoadAll<TileMaterial>("Tiles/Materials");
+            materialKeys = new string[tileMaterials.Length];
+            for (int i = 0; i < tileMaterials.Length; i++)
             {
+                TileMaterial mat = tileMaterials[i];
+                materialKeys[i] = mat.name;
+                if (mat.unityMaterial.mainTexture != null)
+                {
+                    Vector2 scaling = new Vector2(mat.pixelDensity.x / mat.unityMaterial.mainTexture.width, mat.pixelDensity.y / mat.unityMaterial.mainTexture.height);
+                    mat.unityMaterial.mainTextureScale = scaling;
+                }
                 materials.Add(mat.name, mat);
             }
-
-            atlas = new Atlas();
-            //atlas.load = Atlas.Type.Diffuse;
-            atlas.GenerateTextureAtlas();
         }
         public static TileMaterial GetMaterial(string name) => materials[name];
-        public Texture2D diffuse;
-        public Texture2D bump;
-        public Texture2D roughness;
-        public Texture2D specular;
-        public Texture2D normal;
-        public float roughnessFallback = 1.0f;
-        public float specularFallback = 0.0f;
-        public bool deriveSpecularFromRoughness = true;
-        public Vector2 scale = Vector2.one;
+        public UnityEngine.Material unityMaterial;
+        public Vector2 pixelDensity = new Vector2(128, 128);
     }
 }

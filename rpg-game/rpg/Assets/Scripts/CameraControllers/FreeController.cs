@@ -6,7 +6,7 @@ namespace CameraControllers
     /// <summary>
     /// Freely floats around space - First person
     /// </summary>
-    public class FreeController : CameraController, Input.IInputReceiver
+    public class FreeController : CameraController
     {
         public FreeController() : base()
         {
@@ -25,31 +25,31 @@ namespace CameraControllers
 
             velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 10.0f);
         }
-        public void OnInputReceived(Input input)
-        {
-            eyeAngles.x += -input.mouseY.Value * lookSpeed;
-            eyeAngles.y += input.mouseX.Value * lookSpeed;
+        //public override void ReceiveInput(Input.Input input)
+        //{
+        //    eyeAngles.x += -input.mouseY.Value * lookSpeed;
+        //    eyeAngles.y += input.mouseX.Value * lookSpeed;
 
-            eyeAngles.x = Mathf.Clamp(eyeAngles.x, -90.0f, 90.0f);
+        //    eyeAngles.x = Mathf.Clamp(eyeAngles.x, -90.0f, 90.0f);
 
-            Vector3 move = Vector3.zero;
+        //    Vector3 move = Vector3.zero;
 
-            if (input.confirm.Value)
-                move.y += 1;
+        //    if (input.confirm.Value)
+        //        move.y += 1;
 
-            if (input.left.Value)
-                move.x -= 1;
-            if (input.right.Value)
-                move.x += 1;
+        //    if (input.left.Value)
+        //        move.x -= 1;
+        //    if (input.right.Value)
+        //        move.x += 1;
 
-            if (input.forward.Value)
-                move.z += 1;
-            if (input.backward.Value)
-                move.z -= 1;
+        //    if (input.forward.Value)
+        //        move.z += 1;
+        //    if (input.backward.Value)
+        //        move.z -= 1;
 
-            Vector3 accel = camera.transform.rotation * move.normalized * moveSpeed;
+        //    Vector3 accel = camera.transform.rotation * move.normalized * moveSpeed;
 
-            velocity += accel * Time.deltaTime;
-        }
+        //    velocity += accel * Time.deltaTime;
+        //}
     }
 }

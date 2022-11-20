@@ -17,10 +17,10 @@ namespace RPG
             Pawn attackerPawn;
             public override void TurnThink()
             {
-                if (Client.Current.input.confirm.Value)
-                {
-                    ExecuteAttacks();
-                }
+                //if (Client.Current.input.confirm.Value)
+                //{
+                //    ExecuteAttacks();
+                //}
             }
             void OnObjectSelect(Selector.Selection selection)
             {

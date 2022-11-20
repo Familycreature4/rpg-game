@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RPG.Editor.Entities;
 
 namespace RPG.Editor
 {
@@ -17,64 +18,64 @@ namespace RPG.Editor
     /// </summary>
     public static class Serializer
     {
-        static string DirectoryPath => $"{Application.persistentDataPath}/Worlds";
-        public static bool SaveWorldJSON(string worldName, World world)
+        public static string extension = "world";
+        public static string DirectoryPath => $"{Application.persistentDataPath}/Worlds";
+        public static bool SaveWorldJSON(string path, World world)
         {
-            // Serialize world to MemoryStream
-            // Compress to file
-            // Ensure directory exists
-            if (Directory.Exists(DirectoryPath) == false)
-            {
-                Directory.CreateDirectory(DirectoryPath);
-            }
-
-            string fileDirectory = $"{DirectoryPath}/{worldName}.json";
             bool saved = false;
 
-            using (FileStream fileStream = new FileStream(fileDirectory, FileMode.Create))
+            using (FileStream fileStream = new FileStream(path, FileMode.Create))
             {
                 fileStream.SetLength(0);
-                JsonSerializer serializer = new JsonSerializer();
-                using StreamWriter sw = new StreamWriter(fileStream);
-                using JsonWriter writer = new JsonTextWriter(sw);
+                fileStream.Position = 0;
 
-                writer.WriteStartObject();
+                JObject json = new JObject();
+                JArray chunksArray = new JArray();
+                json.Add("chunks", chunksArray);
+                json.Add("chunks-encoding", "base64");
 
-                writer.WritePropertyName("chunks");
-                writer.WriteStartArray();
-                foreach (Chunk chunk in world.chunks.Values)
+                foreach (Chunk chunk in world.Chunks.Values)
                 {
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("coords");
-                    writer.WriteValue($"{chunk.coords.x}.{chunk.coords.y}.{chunk.coords.z}");
+                    JObject jChunk = new JObject();
+                    jChunk.Add("coords", EncodeVector3(chunk.coords));
 
                     // Encode tile data
                     byte[] bytes = EncodeTileData(chunk.tiles);
                     string tileData = System.Convert.ToBase64String(bytes);
-                    writer.WritePropertyName("tiles", false);
-                    writer.WriteValue(tileData);
+                    jChunk.Add("tiles", tileData);
 
-                    writer.WriteEndObject();
+                    chunksArray.Add(jChunk);
                 }
-                writer.WriteEndArray();
 
-                writer.WriteEndObject();
+                // Write all entities in the scene to world
+                JArray entitiesJson = new JArray();
+                json.Add("entities", entitiesJson);
+                Entity[] entities = GameObject.FindObjectsOfType<Entity>();
+                foreach (Entity entity in entities)
+                {
+                    JObject entityJson = new JObject();
+                    entity.OnSerialize(entityJson);
+
+                    entitiesJson.Add(entityJson);
+                }
+
+                StreamWriter streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(JsonConvert.SerializeObject(json));
+                streamWriter.Close();
             }
-
 
             return saved;
         }
-        public static bool LoadWorldJSON(string worldName, World world)
+        public static bool LoadWorldJSON(string path, World world)
         {
-            string fileName = $"{DirectoryPath}/{worldName}.json";
-            if (File.Exists(fileName) == false)
+            if (File.Exists(path) == false)
                 return false;
 
             Dictionary<Vector3Int, Chunk> chunks = null;
             bool loaded = false;
             chunks = new Dictionary<Vector3Int, Chunk>();
 
-            string jsonText = System.IO.File.ReadAllText(fileName);
+            string jsonText = System.IO.File.ReadAllText(path);
 
             Newtonsoft.Json.Linq.JObject token = Newtonsoft.Json.Linq.JObject.Parse(jsonText);
 
@@ -83,8 +84,7 @@ namespace RPG.Editor
                 JProperty tiles = child.Property("tiles");
                 // For each chunk
                 Chunk chunk = new Chunk();
-                string[] coordStrings = child["coords"].ToString().Split(".");
-                chunk.coords = new Vector3Int(int.Parse(coordStrings[0]), int.Parse(coordStrings[1]), int.Parse(coordStrings[2]));
+                chunk.coords = Vector3Int.FloorToInt(DecodeVector3(child["coords"].ToString()));
                 string tileStringData = tiles.Value.ToString();
                 chunk.tiles = DecodeTileData(System.Convert.FromBase64String(tileStringData));
 
@@ -92,9 +92,42 @@ namespace RPG.Editor
             }
 
             world.SetChunks(chunks);
+
+            // Clear existing entities before loading new ones
+            Entity.ClearEntities();
+
+            if (token.ContainsKey("entities"))
+            {
+                foreach (JObject entityJson in token["entities"].Children<JObject>())
+                {
+                    // Determine the type of entity
+                    // Create a gameObject and appropriate component
+                    GameObject gameObject = new GameObject(entityJson["name"].ToString());
+                    System.Type type = System.Type.GetType(entityJson["type"].ToString());
+
+                    Entity entity = gameObject.AddComponent(type) as Entity;
+                    entity.OnDeserialize(entityJson);
+                }
+            }
+            
             loaded = true;
 
             return loaded;
+        }
+        public static bool SaveWorldExplorer(World world)
+        {
+            string filePath = UnityEditor.EditorUtility.SaveFilePanel("Save World", Serializer.DirectoryPath, "world", Serializer.extension);
+            if (filePath != "")
+            {
+                return Serializer.SaveWorldJSON(filePath, World.Current);
+            }
+
+            return false;
+        }
+        public static bool LoadWorldExplorer(World world)
+        {
+            string filePath = UnityEditor.EditorUtility.OpenFilePanel("Open World", DirectoryPath, extension);
+            return LoadWorldJSON(filePath, world);
         }
         static byte[] EncodeTileData(Tile[] tiles)
         {
@@ -178,6 +211,15 @@ namespace RPG.Editor
 
                 return tiles;
             }
+        }
+        public static string EncodeVector3(Vector3 v)
+        {
+            return $"{v.x},{v.y},{v.z}";
+        }
+        public static Vector3 DecodeVector3(string text)
+        {
+            string[] split = text.Split(",");
+            return new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
         }
     }
 }

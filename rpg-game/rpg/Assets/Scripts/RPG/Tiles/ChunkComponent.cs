@@ -53,6 +53,5 @@ namespace RPG
             }
         }
         public Chunk chunk;
-        public bool dirtyMesh = false;
     }
 }

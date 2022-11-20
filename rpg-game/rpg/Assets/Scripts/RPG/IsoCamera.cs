@@ -105,24 +105,24 @@ public class IsoCamera : MonoBehaviour, Input.IInputReceiver
     {
         auxillaryViewAngles = viewAngles;
     }
-    public void OnInputReceived(Input input)
+    public void OnInputReceived(Input.Input input)
     {
-        if (input.rightClick.Pressed)
-        {
-            StartFreeLook();
-        }
+        //if (input.rightClick.Pressed)
+        //{
+        //    StartFreeLook();
+        //}
 
-        if (input.rightClick.Value)
-        {
-            auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + input.mouseY.Value * 6.0f, 0, 60.0f);
-            auxillaryViewAngles.y += input.mouseX.Value * 6.0f;
-            useAuxillaryAngles = true;
-        }
+        //if (input.rightClick.Value)
+        //{
+        //    auxillaryViewAngles.x = Mathf.Clamp(auxillaryViewAngles.x + input.mouseY.Value * 6.0f, 0, 60.0f);
+        //    auxillaryViewAngles.y += input.mouseX.Value * 6.0f;
+        //    useAuxillaryAngles = true;
+        //}
 
-        if (input.rightClick.Pressed)
-            input.rightClick.Consume();
+        //if (input.rightClick.Pressed)
+        //    input.rightClick.Consume();
 
-        this.targetDistance -= input.mouseScroll.Value * 4.0f;
+        //this.targetDistance -= input.mouseScroll.Value * 4.0f;
     }
     public int GetInputPriority() => 100;
 }

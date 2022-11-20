@@ -11,7 +11,7 @@ public class Client : MonoBehaviour, Input.IInputReceiver
     public static Client Current => instance;
     static Client instance;
     public Party party;
-    public Input input = new Input();
+    public Input.Input input;
     BoundsInt lastCameraBounds;
     Vector3Int savedMove;
     float savedRotation;
@@ -26,6 +26,7 @@ public class Client : MonoBehaviour, Input.IInputReceiver
             instance = this;
         }
 
+        input = new Input.RPGInput();
         input.Subscribe(this);
     }
     private void Update()
@@ -38,8 +39,9 @@ public class Client : MonoBehaviour, Input.IInputReceiver
         }
     }
 
-    public void OnInputReceived(Input input)
+    public void OnInputReceived(Input.Input input)
     {
+        Input.RPGInput rpgInput = input as Input.RPGInput;
         #region PAWNS/PARTY
         
         if (party == null)
@@ -47,11 +49,11 @@ public class Client : MonoBehaviour, Input.IInputReceiver
 
         bool didTurn = false;
 
-        if (input.turnLeft.Pressed)
+        if (rpgInput.turnLeft.Pressed)
         {
             savedRotation -= 90.0f;
         }
-        if (input.turnRight.Pressed)
+        if (rpgInput.turnRight.Pressed)
         {
             savedRotation += 90.0f;
         }
@@ -60,25 +62,25 @@ public class Client : MonoBehaviour, Input.IInputReceiver
 
         if (party.CanMove)
         {
-            if (input.forward.Value)
+            if (rpgInput.forward.Value)
             {
                 savedMove.z++;
-                input.forward.Consume();
+                rpgInput.forward.Consume();
             }
-            if (input.backward.Value)
+            if (rpgInput.backward.Value)
             {
                 savedMove.z--;
-                input.backward.Consume();
+                rpgInput.backward.Consume();
             }
-            if (input.left.Value)
+            if (rpgInput.left.Value)
             {
                 savedMove.x--;
-                input.left.Consume();
+                rpgInput.left.Consume();
             }
-            if (input.right.Value)
+            if (rpgInput.right.Value)
             {
                 savedMove.x++;
-                input.right.Consume();
+                rpgInput.right.Consume();
             }
         }
         
