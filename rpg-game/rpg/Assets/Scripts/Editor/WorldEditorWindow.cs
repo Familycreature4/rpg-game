@@ -35,11 +35,15 @@ public class WorldEditorWindow : EditorWindow
         }
 
         GUILayout.Label($"World Status: {(world == null ? "NO WORLD FOUND\nEnsure a gameobject with the RPG.World component is present" : $"World found - {world.gameObject.name} ({(world.Chunks == null ? 0 : world.Chunks.Count)} Chunks)")}");
-        GUILayout.Label($"Tile Materials: {(TileMaterial.materials == null ? "NO MATERIALS BUILT" : $"{TileMaterial.Count} Materials found")}");
-        GUILayout.Label($"Tile Shapes: {(TileShape.shapes == null ? "NO SHAPES BUILT" : $"{TileShape.Count} Shapes found")}");
+        GUILayout.Label($"Tile Materials: {(TileMaterial.materials == null ? "NO MATERIALS BUILT, RELOAD RESOURCES" : $"{TileMaterial.Count} Materials found")}");
+        GUILayout.Label($"Tile Shapes: {(TileShape.shapes == null ? "NO SHAPES BUILT, RELOAD RESOURCES" : $"{TileShape.Count} Shapes found")}");
 
         if (world != null)
         {
+            if (GUILayout.Button("Reload Resources"))
+            {
+                ReloadResources();
+            }
             if (GUILayout.Button("Load World"))
             {
                 ReloadResources();

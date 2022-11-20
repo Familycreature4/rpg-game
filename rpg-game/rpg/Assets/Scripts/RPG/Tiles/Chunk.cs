@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace RPG
 {
+    [System.Serializable]
     public class Chunk
     {
         public const int size = 16;

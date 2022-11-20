@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace RPG.Editor.Entities
 {
+    [AddComponentMenu("RPG Entities/Party Spawn")]
     public class PartySpawn : Entity
     {
         public bool isPlayer = false;

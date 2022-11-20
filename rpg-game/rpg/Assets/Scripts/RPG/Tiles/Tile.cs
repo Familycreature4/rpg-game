@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace RPG
 {
+    [System.Serializable]
     public struct Tile
     {
         public readonly static Tile Air = new Tile {  };

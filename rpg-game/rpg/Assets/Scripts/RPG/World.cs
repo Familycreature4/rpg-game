@@ -4,7 +4,7 @@ using UnityEngine;
 namespace RPG
 {
     [UnityEngine.ExecuteInEditMode]
-    public class World : MonoBehaviour
+    public class World : MonoBehaviour, ISerializationCallbackReceiver
     {
         // The 'static' modifier will assign the given property/field/method to the class TYPE instead of a given instance of the class
         // Any property/field/method which is static AND public is accessible from any part of the game (IE global access)
@@ -24,6 +24,7 @@ namespace RPG
         }
         static World instance;  // Singleton pattern
         public Dictionary<Vector3Int, Chunk> Chunks { get { return chunks; } }
+        Chunk[] chunkCache;
         Dictionary<Vector3Int, Chunk> chunks;
         private void Awake()
         {
@@ -36,7 +37,6 @@ namespace RPG
 
             if (chunks == null)
             {
-                Debug.Log("Creating new chunks dictionary in AWAKE method");
                 chunks = new Dictionary<Vector3Int, Chunk>();
             }
         }
@@ -213,6 +213,36 @@ namespace RPG
             tile.coordinates = coords;
 
             return tile;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            if (chunks == null)
+                return;
+
+            chunkCache = new Chunk[chunks.Count];
+            int index = 0;
+            foreach (Chunk chunk in chunks.Values)
+            {
+                chunkCache[index] = chunk;
+                index++;
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (chunkCache != null)
+            {
+                if (chunks == null)
+                {
+                    chunks = new Dictionary<Vector3Int, Chunk>();
+                }
+
+                foreach (Chunk chunk in chunkCache)
+                {
+                    chunks.Add(chunk.coords, chunk);
+                }
+            }
         }
     }
 }

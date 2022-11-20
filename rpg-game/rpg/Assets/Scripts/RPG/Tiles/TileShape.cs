@@ -6,7 +6,7 @@ namespace RPG
     /// <summary>
     /// 
     /// </summary>
-    [CreateAssetMenu(fileName = "Tile Shape", menuName = "RPG/Tile Shape")]
+    [CreateAssetMenu(fileName = "Tile Shape", menuName = "RPG/Tile Shape")] [System.Serializable] 
     public class TileShape : ScriptableObject
     {
         public static int Count => shapes.Count;

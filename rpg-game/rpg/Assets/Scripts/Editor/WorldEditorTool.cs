@@ -83,6 +83,9 @@ public class WorldEditorTool : EditorTool
                     shift = false;
                 }
                 break;
+            case EventType.MouseMove:
+                window.Repaint();
+                break;
             case EventType.MouseDown:
                 if (Event.current.button == 0)
                 {
@@ -111,7 +114,7 @@ public class WorldEditorTool : EditorTool
                 GUIContent content = new GUIContent(shift ? "DELETE MODE" : "PLACE MODE");
                 style.fontSize = 28;
                 Handles.Label(endPos, content, style);
-
+                
                 if (didEdit)
                 {
                     window.Repaint();

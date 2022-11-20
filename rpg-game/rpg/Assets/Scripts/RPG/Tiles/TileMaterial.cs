@@ -4,6 +4,7 @@ using UnityEngine;
 namespace RPG
 {
     [CreateAssetMenu(fileName = "Tile Material", menuName = "RPG/Tile Material")]
+    [System.Serializable]
     public class TileMaterial : ScriptableObject
     {
         public static Dictionary<string, TileMaterial> materials;
