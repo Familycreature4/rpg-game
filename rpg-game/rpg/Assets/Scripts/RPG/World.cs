@@ -147,6 +147,13 @@ namespace RPG
             
             return chunk;
         }
+        public void DirtyChunks()
+        {
+            foreach (Chunk chunk in chunks.Values)
+            {
+                chunk.IsDirty = true;
+            }
+        }
         ChunkComponent CreateChunkComponent(Chunk chunk)
         {
             GameObject chunkObject = new GameObject(chunk.coords.ToString());

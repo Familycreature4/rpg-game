@@ -22,6 +22,11 @@ namespace RPG.Editor
         public static string DirectoryPath => $"{Application.persistentDataPath}/Worlds";
         public static bool SaveWorldJSON(string path, World world)
         {
+            if (Application.isEditor == false)
+            {
+                return false;
+            }
+
             bool saved = false;
 
             using (FileStream fileStream = new FileStream(path, FileMode.Create))
@@ -32,7 +37,7 @@ namespace RPG.Editor
                 JObject json = new JObject();
                 JArray chunksArray = new JArray();
                 json.Add("chunks", chunksArray);
-                json.Add("chunks-encoding", "base64");
+                json.Add("chunks-encoding", "base64-deflated");
 
                 foreach (Chunk chunk in world.Chunks.Values)
                 {
@@ -72,7 +77,6 @@ namespace RPG.Editor
                 return false;
 
             Dictionary<Vector3Int, Chunk> chunks = null;
-            bool loaded = false;
             chunks = new Dictionary<Vector3Int, Chunk>();
 
             string jsonText = System.IO.File.ReadAllText(path);
@@ -109,10 +113,8 @@ namespace RPG.Editor
                     entity.OnDeserialize(entityJson);
                 }
             }
-            
-            loaded = true;
 
-            return loaded;
+            return true;
         }
         public static bool SaveWorldExplorer(World world)
         {

@@ -37,12 +37,6 @@ public class WorldEditorTool : EditorTool
     int controlId;
     private void OnEnable()
     {
-
-        ResourceSelectionWindow window = EditorWindow.GetWindow<ResourceSelectionWindow>();
-        window.SetType(typeof(TileMaterial));
-        window.Reload();
-
-
         //EditorWindow.GetWindow(typeof(WorldEditorWindow));
     }
     private void OnDisable()

@@ -19,6 +19,7 @@ public class WorldEditorWindow : EditorWindow
         if (world != null)
         {
             ReloadResources();
+            world.DirtyChunks();
         }
         // TILE SHAPE
     }
@@ -53,6 +54,12 @@ public class WorldEditorWindow : EditorWindow
             {
                 ReloadResources();
                 RPG.Editor.Serializer.SaveWorldExplorer(world);
+            }
+            if (GUILayout.Button("Material Explorer"))
+            {
+                ResourceSelectionWindow window = EditorWindow.GetWindow<ResourceSelectionWindow>();
+                window.SetType(typeof(TileMaterial));
+                window.Reload();
             }
         }
     }

@@ -47,6 +47,7 @@ namespace RPG.Editor.Entities
 
             transform.position = position;
             transform.rotation = rotation;
+            gameObject.hideFlags = HideFlags.DontSaveInBuild;
         }
     }
 }
