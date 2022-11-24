@@ -28,7 +28,15 @@ namespace RPG
                 materials.Add(mat.name, mat);
             }
         }
-        public static TileMaterial GetMaterial(string name) => materials[name];
+        private void OnEnable()
+        {
+            if (materials == null)
+                BuildMaterials();
+        }
+        public static TileMaterial GetMaterial(string name)
+        {
+            return materials[name];
+        }
         public UnityEngine.Material unityMaterial;
         public Vector2 pixelDensity = new Vector2(128, 128);
     }

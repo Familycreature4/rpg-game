@@ -26,7 +26,7 @@ public class PropInspector : Editor
                 GameObject.DestroyImmediate(targetProp.gameObject.transform.GetChild(i).gameObject);
             }
 
-            PrefabUtility.InstantiatePrefab(prefabObject, targetProp.transform).hideFlags = HideFlags.HideInHierarchy;
+            targetProp.SetPrefab(prefabObject as GameObject);
         }
         serializedObject.ApplyModifiedProperties();
     }

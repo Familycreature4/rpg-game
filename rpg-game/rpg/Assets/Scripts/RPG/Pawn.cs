@@ -118,40 +118,21 @@ namespace RPG
             if (displacement == Vector3Int.zero)
                 return false;
 
-            Debug.DrawRay(transform.position, displacement, Color.yellow, moveDelay);
-            Vector3Int targetCoordinates = TileTransform.coordinates;
+            Vector3Int targetCoordinates = TileTransform.coordinates + displacement;
 
-            for (int c = 0; c < 3; c++)
-            {
-                // Travel across each component
-                for (int x = 1; x <= Mathf.Abs(displacement[c]); x++)
-                {
-                    Vector3Int disp = Vector3Int.zero;
-                    disp[c] += (int)Mathf.Sign(displacement[c]);
-                    
-                    if (CanStandHere(targetCoordinates + disp))
-                    {
-                        targetCoordinates += disp;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            // To do: Give tiles flags (IE walkable, solid) instead
             // Test whether the coordinates are walkable
-            if (CanStandHere(targetCoordinates))
+            if (MoveHelper.TryMove(TileTransform.coordinates, targetCoordinates, TileTransform.size, out Vector3Int newCoords, TileTransform, party))
             {
-                this.transform.rotation = Quaternion.LookRotation(-displacement);
-                TileTransform.coordinates = targetCoordinates;
+                this.transform.rotation = Quaternion.LookRotation(-(newCoords - TileTransform.coordinates));
+                TileTransform.coordinates = newCoords;
                 nextMoveTime = Time.time + moveDelay;
 
                 return true;
             }
-
-            return false;
+            else
+            {
+                return false;
+            }
         }
         /// <summary>
         /// Teleports the pawn to a walkable tile
@@ -184,33 +165,7 @@ namespace RPG
                 gameObject.SetActive(false);
             }
         }
-        public bool CanStandHere(Vector3Int coord)
-        {
-            if (World.Current.IsSolid(coord + Vector3Int.down) == false)
-                return false;
-
-            foreach (Vector3Int c in new Bounds(coord, TileTransform.size).AllCoords())
-            {
-                if (World.Current.IsSolid(c))
-                    return false;
-
-                if (TileTools.TryGetTileTransform(c, out TileTransform t) && t != TileTransform)
-                {
-                    if (t.TryGetComponent<Pawn>(out Pawn p))
-                    {
-                        if (party != null && party.Contains(p) == false)
-                            return false;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-
-                }
-            }
-
-            return true;
-        }
+        public bool CanStandHere(Vector3Int coord) => MoveHelper.CanStandHere(coord, TileTransform.size, TileTransform, party);
         public Items.Weapon GetWeapon()
         {
             foreach (Items.Item item in inventory.items)

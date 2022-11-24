@@ -25,13 +25,32 @@ public class WorldEditorTool : EditorTool
                 ResourceSelectionWindow window = EditorWindow.GetWindow<ResourceSelectionWindow>();
                 if (window.type == typeof(TileMaterial))
                 {
-                    return window.GetSelected<TileMaterial>();
+                    currentMaterial = window.GetSelected<TileMaterial>();
                 }
             }
 
-            return TileMaterial.GetMaterial("Marble Tile");
+            return currentMaterial;
         }
     }
+    public TileShape SelectedShape
+    {
+        get
+        {
+            if (EditorWindow.HasOpenInstances<ResourceSelectionWindow>())
+            {
+                ResourceSelectionWindow window = EditorWindow.GetWindow<ResourceSelectionWindow>();
+                if (window.type == typeof(TileShape))
+                {
+                    currentShape = window.GetSelected<TileShape>();
+                }
+            }
+
+            return currentShape;
+        }
+    }
+    TileMaterial currentMaterial = TileMaterial.GetMaterial("Marble Tile");
+    TileShape currentShape = TileShape.GetShape("Cube");
+    Vector3 tileAngles = Vector3.zero;
     bool shift = false;
     bool didEdit = false;
     int controlId;
@@ -66,9 +85,19 @@ public class WorldEditorTool : EditorTool
         switch (Event.current.type)
         {
             case EventType.KeyDown:
-                if (Event.current.keyCode == KeyCode.LeftShift)
+                switch (Event.current.keyCode)
                 {
-                    shift = true;
+                    case KeyCode.LeftShift:
+                        shift = true;
+                        break;
+                    case KeyCode.Q:
+                        tileAngles.y += 90.0f;
+                        Event.current.Use();
+                        break;
+                    case KeyCode.E:
+                        tileAngles.y -= 90.0f;
+                        Event.current.Use();
+                        break;
                 }
                 break;
             case EventType.KeyUp:
@@ -85,7 +114,11 @@ public class WorldEditorTool : EditorTool
                 {
                     if (shift == false)
                     {
-                        World.Current.SetTile(Vector3Int.FloorToInt(cursorPos + cursorNormal * 0.01f), new Tile(SelectedMaterial));
+                        World.Current.SetTile(Vector3Int.FloorToInt(cursorPos + cursorNormal * 0.01f), new Tile {
+                            material = SelectedMaterial,
+                            shape = SelectedShape,
+                            rotation = Quaternion.Euler(tileAngles)
+                        });
                     }
                     else
                     {
@@ -102,8 +135,18 @@ public class WorldEditorTool : EditorTool
                 break;
             case EventType.Repaint:
                 Vector3 endPos = cursorPos + cursorNormal * 0.75f;
+
+                // Draw origin
+                float distance = 1.0f;
+                float offset = 1.2f;
+                Quaternion rotation = Quaternion.Euler(tileAngles);
                 Handles.color = Color.red;
-                Handles.ArrowHandleCap(0, cursorPos + cursorNormal * 1.2f, Quaternion.LookRotation(-cursorNormal), 1.0f, EventType.Repaint);
+                Handles.ArrowHandleCap(0, cursorPos, rotation * Quaternion.LookRotation(Vector3.right), distance, EventType.Repaint);
+                Handles.color = Color.blue;
+                Handles.ArrowHandleCap(0, cursorPos, rotation * Quaternion.LookRotation(Vector3.forward), distance, EventType.Repaint);
+                Handles.color = Color.green;
+                Handles.ArrowHandleCap(0, cursorPos, rotation * Quaternion.LookRotation(Vector3.up), distance, EventType.Repaint);
+
                 GUIStyle style = new GUIStyle();
                 GUIContent content = new GUIContent(shift ? "DELETE MODE" : "PLACE MODE");
                 style.fontSize = 28;

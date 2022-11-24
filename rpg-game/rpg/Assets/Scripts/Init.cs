@@ -8,7 +8,7 @@ public class Init : MonoBehaviour
     {
         // Load world
         RPG.World world = new GameObject("World").AddComponent<RPG.World>();
-        RPG.Editor.Serializer.LoadWorldJSON("C:/Users/Shane/AppData/LocalLow/Nudsoft/RPG/Worlds/dungeon4.world", world);
+        RPG.Editor.Serializer.LoadWorldJSON("C:/Users/Shane/AppData/LocalLow/Nudsoft/RPG/Worlds/dungeon5.world", world);
 
         // Spawn player party
         PartySpawn spawn = GameObject.FindObjectOfType<PartySpawn>();
@@ -23,6 +23,9 @@ public class Init : MonoBehaviour
 
                 RPG.Party.AddToParty("Player Party", pawn);
             }
+
+            RPG.RPGPlayer player = new GameObject("Player").gameObject.AddComponent<RPG.RPGPlayer>();
+            player.SetParty(RPG.Party.GetParty("Player Party"));
         }
         else
         {

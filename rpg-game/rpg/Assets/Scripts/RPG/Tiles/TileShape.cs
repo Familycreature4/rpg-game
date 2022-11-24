@@ -21,7 +21,15 @@ namespace RPG
                 shape.Init();
             }
         }
-        public static TileShape GetShape(string name) => shapes[name];
+        public static TileShape GetShape(string name)
+        {
+            return shapes[name];
+        }
+        private void OnEnable()
+        {
+            if (shapes == null)
+                BuildShapes();
+        }
         readonly static Plane[] planes = new Plane[6]
         {
             new Plane { normal = Vector3.forward, distance = 1},

@@ -61,6 +61,12 @@ public class WorldEditorWindow : EditorWindow
                 window.SetType(typeof(TileMaterial));
                 window.Reload();
             }
+            if (GUILayout.Button("Shape Explorer"))
+            {
+                ResourceSelectionWindow window = EditorWindow.GetWindow<ResourceSelectionWindow>();
+                window.SetType(typeof(TileShape));
+                window.Reload();
+            }
         }
     }
     void WorldUpdate()

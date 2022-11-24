@@ -89,12 +89,8 @@ namespace RPG
             if (displacement.magnitude == 0)
                 return false;
 
-            if (Director.Current.state == Director.State.Combat)
-                return false;
-
             if (Leader.Move(displacement))
             {
-                Director.Current.OnPartyMove(this);
                 return true;
             }
 

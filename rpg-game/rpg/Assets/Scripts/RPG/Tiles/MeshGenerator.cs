@@ -69,8 +69,8 @@ namespace RPG
 
                     Vector3 directions = new Vector3(right, up, forward);
 
-                    float uOffset = Vector3.Dot(directions, new Vector3(localCoords.z, localCoords.x, localCoords.x));
-                    float vOffset = Vector3.Dot(directions, new Vector3(localCoords.y, localCoords.z, localCoords.y));
+                    float uOffset = Mathf.Abs(Vector3.Dot(directions, new Vector3(localCoords.z, localCoords.x, localCoords.x)));
+                    float vOffset = Mathf.Abs(Vector3.Dot(directions, new Vector3(localCoords.y, localCoords.z, localCoords.y)));
 
                     // Insert vertices
                     for (int v = 0; v < 3; v++)

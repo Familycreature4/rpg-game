@@ -4,6 +4,7 @@ using UnityEngine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RPG.Editor;
+using UnityEditor;
 
 namespace RPG.Editor.Entities
 {
@@ -47,7 +48,6 @@ namespace RPG.Editor.Entities
 
             transform.position = position;
             transform.rotation = rotation;
-            gameObject.hideFlags = HideFlags.DontSaveInBuild;
         }
     }
 }

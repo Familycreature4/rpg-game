@@ -32,8 +32,10 @@ namespace RPG
             {
                 instance = this;
             }
-            TileMaterial.BuildMaterials();
-            TileShape.BuildShapes();
+            if (TileMaterial.materials == null)
+                TileMaterial.BuildMaterials();
+            if (TileShape.shapes == null)
+                TileShape.BuildShapes();
 
             if (chunks == null)
             {
