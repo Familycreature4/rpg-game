@@ -9,22 +9,9 @@ namespace RPG
     /// </summary>
     public class Director : MonoBehaviour
     {
-        public enum State
-        {
-            // No turns, unrestricted movement
-            Peace,
-
-            // Start counting turns, restrict movement
-            Combat,  
-        }
         public static Director Current => instance;
         static Director instance;
-        public State state = State.Peace;
-        public Battle activeBattle;
-        public Action<Battle> OnBattleStart;
-        public Action<Battle> OnBattleEnd;
-        public Action<Battle.BattleParty> OnBattlePartyTurn;
-        public Action<Battle.BattleParty> OnBattlePartyAttack;
+        public Battle.BattleManager battleManager;
         public Action<Party> onPartyMove;
         private void Awake()
         {
@@ -38,34 +25,23 @@ namespace RPG
                 pair.Value.Update();
             }
 
-            activeBattle?.Update();
+            battleManager?.Update();
         }
-        public void InitiateBattle(params Party[] parties)
+        private void OnDrawGizmos()
         {
-            Debug.Log("Initiating Battle");
-            activeBattle = new Battle(parties);
-            state = State.Combat;
-
-            // Subscribe the director events to the battle
-            activeBattle.OnPartyAttack += OnBattlePartyAttack;
-            activeBattle.OnPartyTurn += OnBattlePartyTurn;
-            activeBattle.onBattleFinished += EndBattle;
-
-            OnBattleStart?.Invoke(activeBattle);
-        }
-        public void EndBattle(Battle battle)
-        {
-            Debug.Log("DIRECTOR END BATTLE");
-            foreach (Battle.BattleParty party in battle.parties)
+            if (Party.parties != null)
             {
-                foreach (Pawn pawn in party.party.pawns)
+                foreach (Party party in Party.parties.Values)
                 {
-                    pawn.ResetState();
+                    Gizmos.color = Color.yellow;
+                    UnityEngine.BoundsInt bounds = party.GetBounds();
+                    Gizmos.DrawWireCube(bounds.center, bounds.size);
                 }
             }
-            state = State.Peace;
-            activeBattle = null;
-            OnBattleEnd?.Invoke(battle);
+        }
+        void BeginBattle(params Party[] parties)
+        {
+            battleManager = Battle.BattleManager.New(parties);
         }
         public Party SpawnParty(Vector3Int coords, bool enemy = true)
         {
@@ -78,24 +54,28 @@ namespace RPG
                 Party.AddToParty(name, pawn);
             }
 
-            return Party.GetParty(name);
+            Party party = Party.GetParty(name);
+            party.onMove += OnPartyMove;
+            return party;
         }
         public void OnPartyMove(Party party)
         {
             onPartyMove?.Invoke(party);
 
-            if (party.IsClient && activeBattle == null)
+            if (party.IsPlayer)
             {
+                UnityEngine.Bounds myBounds = new UnityEngine.Bounds { center = party.GetBounds().center, size = party.GetBounds().size } ;
                 foreach (Party otherParty in Party.parties.Values)
                 {
-                    if (otherParty != Client.Current.party)
+                    if (otherParty != party)
                     {
                         // Check distance to player
-                        float distance = Vector3.Distance(otherParty.GetCenter(), party.GetCenter());
-                        if (distance <= 4)
+                        UnityEngine.Bounds otherBounds = new UnityEngine.Bounds { center = otherParty.GetBounds().center, size = otherParty.GetBounds().size };
+                        float sqrDistance = otherBounds.SqrDistance(myBounds.ClosestPoint(otherBounds.center));
+                        if (sqrDistance <= Mathf.Pow(2, 2))
                         {
                             // Initiate battle
-                            InitiateBattle(otherParty, Client.Current.party);
+                            BeginBattle(otherParty, party);
                             break;
                         }
                     }

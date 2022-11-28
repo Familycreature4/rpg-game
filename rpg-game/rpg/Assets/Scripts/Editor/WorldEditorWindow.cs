@@ -4,7 +4,7 @@ using RPG;
 
 public class WorldEditorWindow : EditorWindow
 {
-    [MenuItem("Window/World Editor")]
+    [MenuItem("RPG/World Editor")]
     public static void ShowWindow()
     {
         WorldEditorWindow window = EditorWindow.GetWindow(typeof(WorldEditorWindow)) as WorldEditorWindow;

@@ -1,39 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 namespace RPG.UI
 {
     public class PawnSheet : MonoBehaviour
     {
+        PawnInfo PawnInfo => transform.Find("PawnInfo").gameObject.GetComponent<PawnInfo>();
+        StatList StatList => transform.Find("StatList").gameObject.GetComponent<StatList>();
         Pawn pawn;
-
         public void SetPawn(Pawn pawn)
         {
             this.pawn = pawn;
+            PawnInfo.SetPawn(pawn);
+            StatList.SetStats(pawn.stats);
+
             UpdateContents();
         }
+
         void UpdateContents()
         {
-            transform.Find("Header/Info/Name").GetComponent<Text>().text = pawn.name;
-            #region Stats
-            Transform bodyStats = transform.Find("Body/Stats");
-            foreach (Transform child in bodyStats)
-            {
-                GameObject.Destroy(child.gameObject);
-            }
-            
-            foreach (Statistic stat in pawn.stats.GetStats())
-            {
-                GameObject statGO = Instantiate(Resources.Load<GameObject>("UI/Stat"), bodyStats);
+            PawnInfo.UpdateContents();
+            StatList.UpdateContents();
 
-                Text name = statGO.transform.Find("Name").GetComponent<Text>();
-                Text value = statGO.transform.Find("Value").GetComponent<Text>();
-
-                name.text = stat.type.ToString();
-                value.text = stat.Value.ToString();
-            }
-            #endregion
+            GetComponent<Canvas>().enabled = true;
         }
     }
 }

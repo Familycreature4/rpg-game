@@ -1,9 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Template name="TileEntry" src="project://database/Assets/Resources/UI/Toolkit/TileEntry.uxml?fileID=9197481963319205126&amp;guid=5d5b07bef3c2c0c42bbc1dc61a563141&amp;type=3#TileEntry" />
-    <Style src="project://database/Assets/Resources/UI/Toolkit/Default.uss?fileID=7433441132597879392&amp;guid=4268436efb27b7c4eb259e57dd4030ce&amp;type=3#Default" />
-    <ui:VisualElement class="backgroundBar" style="border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); left: auto; bottom: auto; right: auto; top: auto; position: relative; background-color: rgba(0, 0, 0, 0.52); margin-left: 4px; margin-right: 4px; margin-top: 4px; margin-bottom: 4px; flex-shrink: 1; flex-grow: 0;">
-        <ui:Instance template="TileEntry" name="TileEntry" />
-        <ui:Instance template="TileEntry" name="TileEntry" />
-        <ui:Instance template="TileEntry" name="TileEntry" />
-    </ui:VisualElement>
-</ui:UXML>

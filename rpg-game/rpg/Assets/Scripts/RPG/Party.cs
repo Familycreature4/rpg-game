@@ -37,8 +37,20 @@ namespace RPG
         public Pawn Leader => pawns.Count > 0 ? pawns[0] : null;
         public bool CanMove => Leader.CanMove;
         public int Count => pawns.Count;
-        public bool IsClient => this == Client.Current.party;
+        public bool IsPlayer
+        {
+            get
+            {
+                if (Player.Current != null && Player.Current is RPGPlayer rpgPlayer)
+                {
+                    return rpgPlayer.Party == this;
+                }
+
+                return false;
+            }
+        }
         public List<Pawn> pawns = new List<Pawn>();
+        public System.Action<Party> onMove;
         // Formations are relative to the pawn Leader (The first pawn in the pawn list)
         public Vector3Int[] formationLocalPositions = {
             new Vector3Int(0, 0, 0),
@@ -86,15 +98,27 @@ namespace RPG
         public bool Contains(Pawn p) => pawns.Contains(p);
         public bool Move(Vector3Int displacement)
         {
-            if (displacement.magnitude == 0)
-                return false;
-
             if (Leader.Move(displacement))
             {
+                onMove?.Invoke(this);
                 return true;
             }
 
             return false;
+        }
+        public UnityEngine.BoundsInt GetBounds()
+        {
+            UnityEngine.Bounds bounds = new UnityEngine.Bounds(GetCenter(), Vector3.zero);
+
+            foreach (Pawn pawn in pawns)
+            {
+                TileTransform tileTransform = pawn.TileTransform;
+                Vector3 pawnCenter = tileTransform.coordinates + ((Vector3)tileTransform.size / 2.0f);
+                UnityEngine.Bounds pawnBounds = new UnityEngine.Bounds(pawnCenter, tileTransform.size);
+                bounds.Encapsulate(pawnBounds);
+            }
+
+            return new BoundsInt { min = Vector3Int.FloorToInt(bounds.min), max = Vector3Int.CeilToInt(bounds.max) };
         }
     }
 }

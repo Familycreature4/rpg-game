@@ -1,6 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Resources/UI/Toolkit/Default.uss?fileID=7433441132597879392&amp;guid=4268436efb27b7c4eb259e57dd4030ce&amp;type=3#Default" />
-    <ui:VisualElement class="backgroundBar" style="height: auto; flex-direction: column; min-height: auto; flex-wrap: nowrap; align-items: stretch; width: auto; flex-shrink: 0; position: relative; flex-basis: auto;">
-        <ui:TextField picking-mode="Ignore" label="Text Field" value="filler text" text="filler text" style="color: rgba(255, 255, 255, 255); -unity-background-image-tint-color: rgba(255, 255, 255, 255);" />
-    </ui:VisualElement>
-</ui:UXML>

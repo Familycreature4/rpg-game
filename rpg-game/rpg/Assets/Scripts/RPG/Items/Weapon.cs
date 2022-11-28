@@ -11,12 +11,6 @@ namespace RPG.Items
         {
             int damageStat = Owner.stats.GetStat( Statistic.Type.Strength ).Value;
             float damage = baseDamage * (Mathf.Log(damageStat, 10.0f) + 1); // Log -> slope decay as X goes to infinity
-
-            target.TakeDamage(new DamageInfo { 
-                attacker = Owner, 
-                damage = damage, 
-                victim = target 
-            });
         }
         public static Weapon GetRandomWeapon()
         {

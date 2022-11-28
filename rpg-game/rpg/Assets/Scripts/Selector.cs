@@ -1,49 +1,51 @@
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
-using System;
-public class Selector : MonoBehaviour
+public class Selector : Input.IInputReceiver
 {
-    public static Selector Current => current;
-    static Selector current;
-    public Action<Selection> OnObjectSelect;
-    public Action<Selection> OnObjectStartHover;
-    public Action OnObjectStopHover;
-    GameObject lastSelectedObject = null;
-    Camera Camera => IsoCamera.Current.camera;
-    RaycastHit[] hits;
-    private void Awake()
+    public Selector(Player player)
     {
-        if (current == null)
-            current = this;
+        this.player = player;
+        player.input.Subscribe(this);
     }
-    private void Update()
+    public Action<GameObject> onGameObjectSelected;
+    Player player;
+    bool Cast(out RaycastHit hit)
     {
-        Ray ray = Camera.ScreenPointToRay(UnityEngine.Input.mousePosition);
-        hits = Physics.RaycastAll(ray, 100.0f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-        System.Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
+        hit = default;
+        Ray ray = player.Camera.ScreenPointToRay(UnityEngine.Input.mousePosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray);
+
+        Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
 
         if (hits.Length > 0)
+            hit = hits[0];
+        return hits.Length > 0;
+    }
+
+    public void OnInputReceived(Input.Input input)
+    {
+        Input.RPGInput rpgInput = input as Input.RPGInput;
+
+        if (rpgInput.leftClick.Pressed && Cast(out RaycastHit hit))
         {
-            GameObject ob = hits[0].collider.gameObject;
-            Selection selection = new Selection { gameObject = ob, mousePosition = UnityEngine.Input.mousePosition };
+            if (hit.collider.gameObject.TryGetComponent<ISelectable>(out ISelectable selectable))
+                selectable.OnSelect(this);
 
-            if (ob != lastSelectedObject)
-            {
-                OnObjectStopHover?.Invoke();
-                OnObjectStartHover?.Invoke(selection);
-            }
-            if (UnityEngine.Input.GetMouseButtonDown(0))
-            {
-                OnObjectSelect?.Invoke(selection);
-            }
-
-            lastSelectedObject = ob;
+            onGameObjectSelected?.Invoke(hit.collider.gameObject);
         }
     }
-    public struct Selection
+
+    public int GetInputPriority()
     {
-        public GameObject gameObject;
-        public Vector3 mousePosition;
+        return 1;
     }
+}
+
+public interface ISelectable
+{
+    public void OnSelect(Selector selector);
 }

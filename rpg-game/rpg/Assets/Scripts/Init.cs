@@ -9,27 +9,23 @@ public class Init : MonoBehaviour
         // Load world
         RPG.World world = new GameObject("World").AddComponent<RPG.World>();
         RPG.Editor.Serializer.LoadWorldJSON("C:/Users/Shane/AppData/LocalLow/Nudsoft/RPG/Worlds/dungeon5.world", world);
+        RPG.Director director = new GameObject("Director").AddComponent<RPG.Director>();
 
         // Spawn player party
-        PartySpawn spawn = GameObject.FindObjectOfType<PartySpawn>();
-        if (spawn != null)
+        foreach (PartySpawn spawn in GameObject.FindObjectsOfType<PartySpawn>())
         {
-            // Create party
-            GameObject pawnPrefab = Resources.Load<GameObject>("Prefabs/GAY CUBE PAWN");
-            for (int i = 0; i < 5; i++)
+            if (spawn.isPlayer)
             {
-                RPG.Pawn pawn = GameObject.Instantiate<GameObject>(pawnPrefab, spawn.transform.position, Quaternion.identity, null).GetComponent<RPG.Pawn>();
-                pawn.Coordinates = Vector3Int.FloorToInt(spawn.transform.position);
+                RPG.Party party = director.SpawnParty(Vector3Int.FloorToInt(spawn.transform.position), false);
+                RPG.RPGPlayer player = new GameObject("Player").gameObject.AddComponent<RPG.RPGPlayer>();
+                player.SetParty(party);
 
-                RPG.Party.AddToParty("Player Party", pawn);
+                UIManager manager = new GameObject("UI Manager").AddComponent<UIManager>();
             }
-
-            RPG.RPGPlayer player = new GameObject("Player").gameObject.AddComponent<RPG.RPGPlayer>();
-            player.SetParty(RPG.Party.GetParty("Player Party"));
-        }
-        else
-        {
-            Debug.Log("No spawn found");
+            else
+            {
+                director.SpawnParty(Vector3Int.FloorToInt(spawn.transform.position), true);
+            }
         }
     }
 }

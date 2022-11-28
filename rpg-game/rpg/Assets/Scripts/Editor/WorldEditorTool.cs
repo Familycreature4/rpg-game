@@ -29,6 +29,9 @@ public class WorldEditorTool : EditorTool
                 }
             }
 
+            if (currentMaterial == null)
+                currentMaterial = TileMaterial.GetMaterial("Marble Tile");
+
             return currentMaterial;
         }
     }
@@ -45,18 +48,41 @@ public class WorldEditorTool : EditorTool
                 }
             }
 
+            if (currentShape == null)
+                currentShape = TileShape.GetShape("Cube");
+
             return currentShape;
         }
     }
-    TileMaterial currentMaterial = TileMaterial.GetMaterial("Marble Tile");
-    TileShape currentShape = TileShape.GetShape("Cube");
+    TileMaterial currentMaterial;
+    TileShape currentShape;
+    Tile CurrentTile => new Tile
+    {
+        material = SelectedMaterial,
+        shape = SelectedShape,
+        rotation = Quaternion.Euler(tileAngles)
+    };
     Vector3 tileAngles = Vector3.zero;
     bool shift = false;
     bool didEdit = false;
     int controlId;
+    RPG.Editor.Selection selection;
     private void OnEnable()
     {
         //EditorWindow.GetWindow(typeof(WorldEditorWindow));
+        if (selection == null)
+        {
+            selection = new RPG.Editor.Selection();
+            selection.bounds = new UnityEngine.Bounds(Vector3.zero, new Vector3(10, 1, 10));
+            selection.onSelect = delegate () {
+                Tile tile = CurrentTile;
+                foreach (Vector3Int c in selection.GetCoords())
+                {
+                    World.Current.SetTile(c, tile);
+                }
+                return true;
+            };
+        }
     }
     private void OnDisable()
     {
@@ -66,6 +92,11 @@ public class WorldEditorTool : EditorTool
     {
         if (window is SceneView == false)
             return;
+
+        if (selection != null)
+        {
+            selection.OnGUI(window);
+        }
 
         Ray guiRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
 
@@ -114,11 +145,7 @@ public class WorldEditorTool : EditorTool
                 {
                     if (shift == false)
                     {
-                        World.Current.SetTile(Vector3Int.FloorToInt(cursorPos + cursorNormal * 0.01f), new Tile {
-                            material = SelectedMaterial,
-                            shape = SelectedShape,
-                            rotation = Quaternion.Euler(tileAngles)
-                        });
+                        World.Current.SetTile(Vector3Int.FloorToInt(cursorPos + cursorNormal * 0.01f), CurrentTile);
                     }
                     else
                     {
@@ -138,7 +165,6 @@ public class WorldEditorTool : EditorTool
 
                 // Draw origin
                 float distance = 1.0f;
-                float offset = 1.2f;
                 Quaternion rotation = Quaternion.Euler(tileAngles);
                 Handles.color = Color.red;
                 Handles.ArrowHandleCap(0, cursorPos, rotation * Quaternion.LookRotation(Vector3.right), distance, EventType.Repaint);
@@ -147,11 +173,13 @@ public class WorldEditorTool : EditorTool
                 Handles.color = Color.green;
                 Handles.ArrowHandleCap(0, cursorPos, rotation * Quaternion.LookRotation(Vector3.up), distance, EventType.Repaint);
 
+                Handles.DrawWireArc(cursorPos, Vector3.up, Vector3.forward, tileAngles.y % 360.0f, 1.0f);
+
                 GUIStyle style = new GUIStyle();
                 GUIContent content = new GUIContent(shift ? "DELETE MODE" : "PLACE MODE");
                 style.fontSize = 28;
                 Handles.Label(endPos, content, style);
-                
+
                 if (didEdit)
                 {
                     window.Repaint();

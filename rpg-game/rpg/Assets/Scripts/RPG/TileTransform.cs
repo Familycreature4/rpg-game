@@ -23,12 +23,5 @@ namespace RPG
             Gizmos.DrawWireCube((Vector3Int.FloorToInt(transform.position) + new Vector3(0.5f, size.y / 2.0f, 0.5f)), size);
             //Gizmos.DrawWireCube(Bounds.mins + (Vector3)Bounds.size / 2.0f, (Vector3)size);
         }
-
-        public void Place(Vector3 position, Quaternion rotation)
-        {
-            GameObject instance = GameObject.Instantiate(this.gameObject, Vector3Int.FloorToInt(position), rotation);
-            TileTransform t = instance.GetComponent<TileTransform>();
-            t.coordinates = Vector3Int.FloorToInt(position);
-        }
     }
 }

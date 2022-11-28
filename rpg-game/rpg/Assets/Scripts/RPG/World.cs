@@ -223,7 +223,6 @@ namespace RPG
 
             return tile;
         }
-
         public void OnBeforeSerialize()
         {
             if (chunks == null)
@@ -237,7 +236,6 @@ namespace RPG
                 index++;
             }
         }
-
         public void OnAfterDeserialize()
         {
             if (chunkCache != null)
@@ -250,6 +248,23 @@ namespace RPG
                 foreach (Chunk chunk in chunkCache)
                 {
                     chunks.Add(chunk.coords, chunk);
+                }
+            }
+        }
+        void ClearEntities(UnityEngine.SceneManagement.Scene scene, bool remove)
+        {
+            foreach (Editor.Entities.Entity ent in GameObject.FindObjectsOfType<Editor.Entities.Entity>())
+            {
+                if (ent.gameObject == null)
+                    continue;
+
+                if (Application.isEditor)
+                {
+                    GameObject.DestroyImmediate(ent.gameObject);
+                }
+                else
+                {
+                    GameObject.Destroy(ent.gameObject);
                 }
             }
         }

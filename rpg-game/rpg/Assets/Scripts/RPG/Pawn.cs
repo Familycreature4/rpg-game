@@ -15,10 +15,9 @@ namespace RPG
         {
             get
             {
-                return Time.time >= nextMoveTime;
+                return Time.time >= nextMoveTime && (Director.Current != null && Director.Current.battleManager == null);
             }
         }
-        public bool IsDead => health <= 0;
         public TileTransform TileTransform => GetComponent<TileTransform>();
         public bool IsLeader
         {
@@ -37,8 +36,6 @@ namespace RPG
         public Party party;
         public Items.Inventory inventory;
         public Stats stats;
-        public System.Action<DamageInfo> OnDamageTaken;
-        public System.Action onDeath;
         public new string name;
         public Vector3Int Coordinates
         {
@@ -53,8 +50,6 @@ namespace RPG
         }
         float moveDelay = 0.2f;  // Amount of time in seconds between movements
         float nextMoveTime = 0;
-        public float maxHealth = 100.0f;
-        public float health = 100.0f;
         private void Start()
         {
             stats = new Stats();
@@ -62,7 +57,6 @@ namespace RPG
             inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
             //MoveToWalkableSpace();
             transform.position = TileTransform.coordinates + Vector3.one / 2.0f;
-            health = maxHealth;
         }
         private void Update()
         {
@@ -123,58 +117,23 @@ namespace RPG
             // Test whether the coordinates are walkable
             if (MoveHelper.TryMove(TileTransform.coordinates, targetCoordinates, TileTransform.size, out Vector3Int newCoords, TileTransform, party))
             {
-                this.transform.rotation = Quaternion.LookRotation(-(newCoords - TileTransform.coordinates));
-                TileTransform.coordinates = newCoords;
-                nextMoveTime = Time.time + moveDelay;
+                Vector3Int realDisplacement = newCoords - TileTransform.coordinates;
+                if (realDisplacement != Vector3Int.zero)
+                {
+                    Vector3 lookDirection = -realDisplacement;
+                    lookDirection.y = 0;
+                    if (lookDirection.sqrMagnitude > 0)
+                        this.transform.rotation = Quaternion.LookRotation(lookDirection);
+                    TileTransform.coordinates = newCoords;
+                    nextMoveTime = Time.time + moveDelay;
 
-                return true;
+                    return true;
+                }
+                
             }
-            else
-            {
-                return false;
-            }
-        }
-        /// <summary>
-        /// Teleports the pawn to a walkable tile
-        /// </summary>
-        void MoveToWalkableSpace()
-        {
-            if (TileTools.GetClosestCoord(TileTransform.coordinates, delegate (Vector3Int c) { return CanStandHere(c); }, out Vector3Int coords))
-                TileTransform.coordinates = coords;
-        }
-        public void ResetMoveTime()
-        {
-            nextMoveTime = Time.time;
-        }
-        public void InvokeMoveDelay()
-        {
-            nextMoveTime = Time.time + moveDelay;
-        }
-        public void ResetState()
-        {
-            health = maxHealth;
-            gameObject.SetActive(true);
-        }
-        public void TakeDamage(DamageInfo damage)
-        {
-            health = Mathf.Max(health - damage.damage, 0);
-            OnDamageTaken?.Invoke(damage);
 
-            if (health <= 0)
-            {
-                gameObject.SetActive(false);
-            }
+            return false;
         }
         public bool CanStandHere(Vector3Int coord) => MoveHelper.CanStandHere(coord, TileTransform.size, TileTransform, party);
-        public Items.Weapon GetWeapon()
-        {
-            foreach (Items.Item item in inventory.items)
-            {
-                if (item is Weapon weapon)
-                    return weapon;
-            }
-
-            return null;
-        }
     }
 }

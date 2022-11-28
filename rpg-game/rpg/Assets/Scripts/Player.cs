@@ -6,6 +6,8 @@ using UnityEngine;
 /// </summary>
 public class Player : MonoBehaviour
 {
+    public static Player Current => current;
+    protected static Player current;
     public Camera Camera => cameraController.camera;
     public CameraControllers.CameraController cameraController;
     public Input.Input input;

@@ -1,4 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Resources/UI/Toolkit/Default.uss?fileID=7433441132597879392&amp;guid=4268436efb27b7c4eb259e57dd4030ce&amp;type=3#Default" />
-    <RPG.Editor.Handle name="handle" class="handle" style="position: absolute;" />
-</ui:UXML>

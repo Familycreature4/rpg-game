@@ -11,12 +11,19 @@ namespace RPG
     {
         public Party Party => party;
         Party party;
+        public Selector selector;
+        public System.Action<Party, Party> onPartyChange;
         private void Awake()
         {
+            if (current == null)
+                current = this;
+
             input = new RPGInput();
             base.cameraController = new CameraControllers.RPGController(this);
 
             input.Subscribe(this);
+
+            selector = new Selector(this);
         }
         void Update()
         {
@@ -28,7 +35,10 @@ namespace RPG
         }
         public void SetParty(Party party)
         {
+            Party oldParty = this.party;
             this.party = party;
+
+            onPartyChange?.Invoke(oldParty, this.party);
         }
 
         public void OnInputReceived(Input.Input input)

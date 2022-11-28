@@ -5,10 +5,6 @@ namespace Input
 {
     public abstract class Input
     {
-        /// <summary>
-        /// Whether the cursor is inside a UI element
-        /// </summary>
-        public static bool cursorIsUIFocused;
         public List<IInputReceiver> receivers;
         public virtual void Update()
         {
@@ -20,9 +16,9 @@ namespace Input
             // Higher => First to get input
             receivers.Sort(delegate (IInputReceiver a, IInputReceiver b) { return b.GetInputPriority().CompareTo(a.GetInputPriority()); });
 
-            foreach (IInputReceiver receiver in receivers)
+            for (int i = 0; i < receivers.Count; i++)
             {
-                receiver.OnInputReceived(this);
+                receivers[i].OnInputReceived(this);
             }
         }
         public virtual void Subscribe(IInputReceiver receiver)
@@ -62,7 +58,7 @@ namespace Input
                 oldValue = Value;
                 bool keyDown = (keyCode != KeyCode.None && UnityEngine.Input.GetKey(keyCode)) || (mouseIndex != -1 && UnityEngine.Input.GetMouseButton(mouseIndex));
 
-                Value = UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject() ? false : keyDown;
+                Value = keyDown;
 
                 Pressed = oldValue == false && Value == true;
                 Released = oldValue == true && Value == false;
