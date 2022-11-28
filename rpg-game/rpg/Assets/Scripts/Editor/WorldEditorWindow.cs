@@ -45,6 +45,12 @@ public class WorldEditorWindow : EditorWindow
             {
                 ReloadResources();
             }
+            if (GUILayout.Button("New World"))
+            {
+                ReloadResources();
+                RPG.Editor.Entities.Entity.ClearEntities();
+                RPG.World.Current.SetChunks(new System.Collections.Generic.Dictionary<Vector3Int, Chunk>());
+            }
             if (GUILayout.Button("Load World"))
             {
                 ReloadResources();

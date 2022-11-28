@@ -47,6 +47,8 @@ namespace RPG
         public List<int> indices;
         [System.NonSerialized]
         public int[] triangleFaces;
+        public bool[] occlusionFaces = new bool[6] { true, true, true, true, true, true };
+        public bool climbable = false;
         public void Init()
         {
             vertices = new List<MeshGenerator.Vertex>();

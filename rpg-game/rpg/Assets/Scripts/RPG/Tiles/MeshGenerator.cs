@@ -40,13 +40,29 @@ namespace RPG
                     slotCounter++;
                 }
 
-                // Create the solid mask
-                int solidMask = 0;
-                for (int i = 0; i < 6; i++)
+                // Create the solid mask (Which neighboring tiles should occlude this tile's sides)
+                int occlusionMask = 0;
+                for (int i = 0; i < 6; i++)  // For each direction
                 {
-                    bool solid = World.Current.GetTile(localCoords + Vector3Int.RoundToInt(tile.rotation * Tile.neighbors[i]) + chunk.coords * Chunk.size).IsSolid;
-                    if (solid)
-                        solidMask |= 1 << i;
+                    Vector3Int localDirection = Tile.neighbors[i];
+                    Vector3Int worldDirection = Vector3Int.RoundToInt(tile.rotation * localDirection);
+
+                    Vector3Int worldNeighborCoords = localCoords + chunk.coords * Chunk.size + worldDirection;
+                    Tile neighborTile = World.Current.GetTile(worldNeighborCoords);
+
+                    if (neighborTile.shape == null)
+                        continue;
+
+                    // Convert opposite direction of world space direction to local space of neighbor tile
+
+                    Vector3Int localNeighborDirection = Vector3Int.RoundToInt(Quaternion.Inverse(neighborTile.rotation) * -worldDirection);
+                    int index = Tile.GetNeighborIndex(localNeighborDirection);
+                    if (index == -1)
+                        continue;
+
+                    bool occluder = neighborTile.shape.occlusionFaces[index];
+                    if (occluder)
+                        occlusionMask |= 1 << i;
                 }
 
                 // Add triangles
@@ -54,7 +70,7 @@ namespace RPG
                 {
                     // Check if adjacent block should be occluding this triangle
                     int faceIndex = tile.shape.triangleFaces[t];
-                    if (faceIndex != -1 && ((1 << faceIndex) & solidMask) == (1 << faceIndex))
+                    if (faceIndex != -1 && ((1 << faceIndex) & occlusionMask) == (1 << faceIndex))
                         continue;
 
                     // Determine the UV mapping offsets

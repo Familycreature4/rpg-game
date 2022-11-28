@@ -8,7 +8,7 @@ public class Init : MonoBehaviour
     {
         // Load world
         RPG.World world = new GameObject("World").AddComponent<RPG.World>();
-        RPG.Editor.Serializer.LoadWorldJSON("C:/Users/Shane/AppData/LocalLow/Nudsoft/RPG/Worlds/dungeon5.world", world);
+        RPG.Editor.Serializer.LoadWorldJSON("C:/Users/Shane/AppData/LocalLow/Nudsoft/RPG/Worlds/dungeon6.world", world);
         RPG.Director director = new GameObject("Director").AddComponent<RPG.Director>();
 
         // Spawn player party

@@ -7,7 +7,7 @@ namespace RPG
     public struct Tile
     {
         public readonly static Tile Air = new Tile {  };
-        public static Vector3Int[] neighbors =
+        public readonly static Vector3Int[] neighbors =
         {
             new Vector3Int(0, 0, 1),
             new Vector3Int(0, 0, -1),
@@ -16,6 +16,18 @@ namespace RPG
             new Vector3Int(0, 1, 0),
             new Vector3Int(0, -1, 0),
         };
+        public static int GetNeighborIndex(Vector3Int direction)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                if (direction == neighbors[i])
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
         public Tile(string mat)
         {
             shape = TileShape.GetShape("Cube");
@@ -29,6 +41,7 @@ namespace RPG
             rotation = Quaternion.identity;
         }
         public bool IsSolid => material != null && shape != null;
+        public bool IsClimbable => shape != null && shape.climbable;
         public TileShape shape;
         public TileMaterial material;
         public Quaternion rotation;  // The orientation of this tile

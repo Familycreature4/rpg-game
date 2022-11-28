@@ -47,7 +47,7 @@ namespace RPG
                 Tile targetCoordinatesTile = World.Current.GetTile(to);
                 if (targetCoordinatesTile.IsSolid)
                 {
-                    if (targetCoordinatesTile.shape != null && targetCoordinatesTile.shape.name == "Stairs")
+                    if (targetCoordinatesTile.shape != null && targetCoordinatesTile.IsClimbable)
                     {
                         // Try to move up
                         if (CanStandHere(to + Vector3Int.up, size, myTransform, myParty))
@@ -60,7 +60,7 @@ namespace RPG
                 else  // Is air. Check if FROM is below a stair tile to move down
                 {
                     Tile stairTile = World.Current.GetTile(from + Vector3Int.down);
-                    if (stairTile.shape != null && stairTile.shape.name == "Stairs")
+                    if (stairTile.shape != null && stairTile.IsClimbable)
                     {
                         if (CanStandHere(to - Vector3Int.up, size, myTransform, myParty))
                         {

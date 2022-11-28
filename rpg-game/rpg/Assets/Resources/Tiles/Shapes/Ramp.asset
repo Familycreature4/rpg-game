@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f6574e2541391f5419b79e6c734e99d7, type: 3}
-  m_Name: Stairs
+  m_Name: Ramp
   m_EditorClassIdentifier: 
-  mesh: {fileID: 4104380202958562290, guid: 02f1127d911ee83468693d1c49f226aa, type: 3}
+  mesh: {fileID: -478882678752539408, guid: a9587d4c1f41a3943912f67aa9e92356, type: 3}
   occlusionFaces: 010000000001
   climbable: 1
