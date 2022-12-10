@@ -25,7 +25,12 @@ namespace RPG
         new Vector3Int(-1, -1, 0), new Vector3Int(0, -1, 0), new Vector3Int(1, -1, 0),
         new Vector3Int(-1, -1, -1), new Vector3Int(0, -1, -1), new Vector3Int(1, -1, -1),
         };
-        public static bool GetPath(Vector3Int start, Vector3Int end, System.Func<Vector3Int, bool> walkableFunction, out List<Vector3Int> path, int maxIterations = -1)
+        public static bool GetPath( Vector3Int start,
+                                    Vector3Int end, 
+                                    out List<Vector3Int> path, 
+                                    System.Func<Vector3Int, bool> coordCheck = null, 
+                                    System.Func<Vector3Int, Vector3Int, bool> moveToCheck = null,
+                                    int maxIterations = -1)
         {
             int GetHCost(Vector3Int start, Vector3Int end)
             {
@@ -43,9 +48,9 @@ namespace RPG
             List<ATile> openTiles = new List<ATile>();
             HashSet<Vector3Int> closedTiles = new HashSet<Vector3Int>();
             Dictionary<Vector3Int, ATile> tiles = new Dictionary<Vector3Int, ATile>();
-            if (walkableFunction == null)
+            if (coordCheck == null)
             {
-                walkableFunction = delegate (Vector3Int coord)
+                coordCheck = delegate (Vector3Int coord)
                 {
                     return World.Current.IsSolid(coord) == false && World.Current.IsSolid(coord + Vector3Int.down);
                 };
@@ -73,6 +78,9 @@ namespace RPG
                 {
                     Vector3Int neighborCoords = currentTile.coords + direction;
 
+                    if (moveToCheck != null && moveToCheck(currentTile.coords, neighborCoords) == false)
+                        continue;
+
                     if (neighborCoords == end)
                     {
                         // PATH FOUND
@@ -93,7 +101,7 @@ namespace RPG
                     }
 
                     Tile neighborWorldTile = World.Current.GetTile(neighborCoords);
-                    if (closedTiles.Contains(neighborCoords) || walkableFunction(neighborCoords) == false)
+                    if (closedTiles.Contains(neighborCoords) || coordCheck(neighborCoords) == false)
                         continue;
 
                     // Calculate new gCost
@@ -186,7 +194,7 @@ namespace RPG
                 // Check whether any tile transforms are blocking this
                 foreach (TileTransform t in TileTransform.transforms)
                 {
-                    if (t == myTransform)
+                    if (t == myTransform || t.isActiveAndEnabled == false)
                         continue;
 
                     if (t.Bounds.Overlaps(bounds))
@@ -204,6 +212,8 @@ namespace RPG
         {
             foreach (TileTransform tileTransform in TileTransform.transforms)
             {
+                if (tileTransform.isActiveAndEnabled == false)
+                    continue;
                 if (tileTransform.Bounds.Contains(coords))
                 {
                     t = tileTransform;

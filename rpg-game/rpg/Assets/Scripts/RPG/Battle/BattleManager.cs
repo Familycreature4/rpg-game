@@ -3,55 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RPG.Battle.Attackers;
-using UnityEngine;
+
 namespace RPG.Battle
 {
     public class BattleManager
     {
-        public Party ActiveParty => ActiveAttacker.Party;
-        Attacker ActiveAttacker => attackers [activeAttackerIndex];
-        Attacker[] attackers;
-        int activeAttackerIndex;
-        public static BattleManager New(params Party[] parties)
+        public Party ActiveParty => currentBattle.ActiveParty;
+        public Battle currentBattle;
+        public void BeginBattle(params Party[] parties)
         {
-            BattleManager manager = new BattleManager();
-            manager.attackers = new Attacker[parties.Length];
-            int playerIndex = 0;
-            for (int i = 0; i < parties.Length; i++)
-            {
-                Party party = parties[i];
-                if (party.IsPlayer)
-                {
-                    manager.attackers[i] = new Attackers.Player(party, manager, Player.Current as RPGPlayer);
-                    playerIndex = i;
-                }
-                else
-                    manager.attackers[i] = new Attackers.Bot(party, manager);
-            }
+            Battle newBattle = Battle.New(parties);
+            currentBattle = newBattle;
 
-            manager.activeAttackerIndex = playerIndex;
+            EventManager.onBattleEnd += OnBattleEnd;
 
-            return manager;
+            EventManager.onBattleStart?.Invoke(newBattle);
         }
-        public void TryTurn(Attacker attacker)
+        void OnBattleEnd(Battle battle)
         {
-            if (attacker == ActiveAttacker)
-            {
-                Debug.Log($"{attacker} has attacked!!!");
-
-                activeAttackerIndex++;
-                if (activeAttackerIndex >= attackers.Length)
-                    activeAttackerIndex = 0;
-
-                ActiveAttacker.TurnBegin();
-            }
+            currentBattle = null;
         }
         public void Update()
         {
-            // Get and update the active attacker
-
-            ActiveAttacker?.TurnThink();
+            currentBattle?.Update();
         }
     }
 }

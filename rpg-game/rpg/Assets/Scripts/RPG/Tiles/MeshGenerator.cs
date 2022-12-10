@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Threading.Tasks;
 namespace RPG
 {
     /// <summary>
@@ -15,7 +16,6 @@ namespace RPG
             new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float32, 3, 0),
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, 0),
         };
-
         public static void Generate(Chunk chunk)
         {
             // Foreach tile's neighbors
@@ -151,7 +151,6 @@ namespace RPG
 
             chunk.component.MeshRenderer.sharedMaterials = meshMaterials;
         }
-
         public struct Vertex
         {
             public Vector3 position;

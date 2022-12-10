@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using RPG.Battle;
 namespace RPG
 {
     /// <summary>
@@ -11,63 +12,57 @@ namespace RPG
     {
         public static Director Current => instance;
         static Director instance;
+        public Battle.Battle Battle => battleManager == null ? null : battleManager.currentBattle;
         public Battle.BattleManager battleManager;
-        public Action<Party> onPartyMove;
+        public List<Party> parties = new List<Party>();
         private void Awake()
         {
             if (instance == null)
                 instance = this;
+
+            battleManager = new BattleManager();
+
+            EventManager.onPartyMove += OnPartyMove;
         }
         private void Update()
         {
-            foreach (KeyValuePair<string, Party> pair in Party.parties)
+            foreach (Party party in parties)
             {
-                pair.Value.Update();
+                party.Update();
             }
 
             battleManager?.Update();
         }
         private void OnDrawGizmos()
         {
-            if (Party.parties != null)
+            if (parties != null)
             {
-                foreach (Party party in Party.parties.Values)
+                foreach (Party party in parties)
                 {
                     Gizmos.color = Color.yellow;
                     UnityEngine.BoundsInt bounds = party.GetBounds();
                     Gizmos.DrawWireCube(bounds.center, bounds.size);
+
+                    UnityEditor.Handles.Label(bounds.center, party.name);
                 }
             }
         }
         void BeginBattle(params Party[] parties)
         {
-            battleManager = Battle.BattleManager.New(parties);
+            battleManager.BeginBattle(parties);
         }
-        public Party SpawnParty(Vector3Int coords, bool enemy = true)
+        public void AddParty(Party party)
         {
-            string name = enemy ? $"Party {Party.parties.Count}" : "PLAYER";
-            GameObject prefab = enemy ? Resources.Load<GameObject>("Prefabs/ENEMY") : Resources.Load<GameObject>("Prefabs/GAY CUBE PAWN");
-            for (int i = 0; i < 5; i++)
-            {
-                GameObject pawnObject = Instantiate(prefab, coords, Quaternion.identity);
-                Pawn pawn = pawnObject.GetComponent<Pawn>();
-                Party.AddToParty(name, pawn);
-            }
-
-            Party party = Party.GetParty(name);
-            party.onMove += OnPartyMove;
-            return party;
+            parties.Add(party);
         }
         public void OnPartyMove(Party party)
         {
-            onPartyMove?.Invoke(party);
-
-            if (party.IsPlayer)
+            if (Battle == null && party.IsPlayer)
             {
                 UnityEngine.Bounds myBounds = new UnityEngine.Bounds { center = party.GetBounds().center, size = party.GetBounds().size } ;
-                foreach (Party otherParty in Party.parties.Values)
+                foreach (Party otherParty in parties)
                 {
-                    if (otherParty != party)
+                    if (otherParty != party && otherParty.AllDead == false)
                     {
                         // Check distance to player
                         UnityEngine.Bounds otherBounds = new UnityEngine.Bounds { center = otherParty.GetBounds().center, size = otherParty.GetBounds().size };

@@ -4,48 +4,79 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-public class Selector : Input.IInputReceiver
+public class Selector
 {
     public Selector(Player player)
     {
         this.player = player;
-        player.input.Subscribe(this);
+
+        EventManager.OnInput += OnInput;
     }
-    public Action<GameObject> onGameObjectSelected;
+    /// <summary>
+    /// Return true on callback to 'consume' selection event (IE do not invoke further events)
+    /// </summary>
+    public GameObject currentHover;
+    GameObject lastHover;
+    RaycastHit lastHit;
     Player player;
-    bool Cast(out RaycastHit hit)
+    RaycastHit[] hitBuffer = new RaycastHit[32];
+    int raycastHitCount;
+    void Cast()
     {
-        hit = default;
         Ray ray = player.Camera.ScreenPointToRay(UnityEngine.Input.mousePosition);
-        RaycastHit[] hits = Physics.RaycastAll(ray);
 
-        Array.Sort(hits, delegate (RaycastHit a, RaycastHit b) { return a.distance.CompareTo(b.distance); });
+        raycastHitCount = Physics.RaycastNonAlloc(ray, hitBuffer);
 
-        if (hits.Length > 0)
-            hit = hits[0];
-        return hits.Length > 0;
+        Array.Sort(hitBuffer, delegate (RaycastHit a, RaycastHit b) {
+            // Lesser value => first in array
+            if (a.collider == null)
+                return 1;  // Yield to B
+            if (b.collider == null)
+                return -1;  // Yield to A
+
+            return a.distance.CompareTo(b.distance);
+        });
     }
-
-    public void OnInputReceived(Input.Input input)
+    public void OnInput(Input.RPGInput input)
     {
-        Input.RPGInput rpgInput = input as Input.RPGInput;
+        if (Cursor.visible == false)
+            return;
 
-        if (rpgInput.leftClick.Pressed && Cast(out RaycastHit hit))
+        Cast();
+
+        if (raycastHitCount > 0)
+            currentHover = hitBuffer[0].collider.gameObject;
+        else
+            currentHover = null;
+
+        if (currentHover != lastHover && currentHover != null)
         {
-            if (hit.collider.gameObject.TryGetComponent<ISelectable>(out ISelectable selectable))
-                selectable.OnSelect(this);
+            if (lastHover != null)
+            {
+                EventManager.OnEndHover?.Invoke(new RPG.Events.SelectArgs(this, lastHit));
+            }
+            RPG.Events.SelectArgs selectArgs = new RPG.Events.SelectArgs(this, hitBuffer[0]);
+            EventManager.OnStartHover?.Invoke(selectArgs);
+        }
 
-            onGameObjectSelected?.Invoke(hit.collider.gameObject);
+        lastHover = currentHover;
+        lastHit = hitBuffer[0];
+
+        if (input.leftClick.Pressed)
+        {
+            RPG.Events.SelectArgs args = new RPG.Events.SelectArgs(this, default);
+
+            // Iterate over each raycast hit until the invoke returns true
+            for (int i = 0; i < raycastHitCount; i++)
+            {
+                RaycastHit hit = hitBuffer[i];
+                args.SetRaycastHit(hit);
+
+                EventManager.OnSelect?.Invoke(args);
+
+                if ( args.Consumed )  // If the event was 'eaten' do not continue invoking
+                    break;
+            }
         }
     }
-
-    public int GetInputPriority()
-    {
-        return 1;
-    }
-}
-
-public interface ISelectable
-{
-    public void OnSelect(Selector selector);
 }

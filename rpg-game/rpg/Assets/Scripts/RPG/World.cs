@@ -253,7 +253,7 @@ namespace RPG
         }
         void ClearEntities(UnityEngine.SceneManagement.Scene scene, bool remove)
         {
-            foreach (Editor.Entities.Entity ent in GameObject.FindObjectsOfType<Editor.Entities.Entity>())
+            foreach (Entities.Entity ent in GameObject.FindObjectsOfType<Entities.Entity>())
             {
                 if (ent.gameObject == null)
                     continue;

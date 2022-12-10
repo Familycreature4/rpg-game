@@ -14,4 +14,11 @@ public static class Utilities
     {
         return (x % m + m) % m;
     }
+    public static void DeleteChildren(this Transform transform)
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject.Destroy(transform.GetChild(i).gameObject);
+        }
+    }
 }

@@ -7,6 +7,7 @@ namespace RPG.UI
 {
     public class Stat : MonoBehaviour
     {
+        public Text ValueText => transform.Find("Value").GetComponent<Text>();
         RPG.Statistic stat;
         public void SetStat(Statistic stat)
         {

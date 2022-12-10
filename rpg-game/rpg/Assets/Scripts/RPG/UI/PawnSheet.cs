@@ -22,7 +22,7 @@ namespace RPG.UI
             PawnInfo.UpdateContents();
             StatList.UpdateContents();
 
-            GetComponent<Canvas>().enabled = true;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
         }
     }
 }

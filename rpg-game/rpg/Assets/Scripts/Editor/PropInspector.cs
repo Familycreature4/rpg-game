@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using RPG.Editor.Entities;
-[CustomEditor(typeof(RPG.Editor.Entities.Prop))]
+using RPG.Entities;
+[CustomEditor(typeof(RPG.Entities.Prop))]
 public class PropInspector : Editor
 {
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        Prop targetProp = target as RPG.Editor.Entities.Prop;
+        Prop targetProp = target as RPG.Entities.Prop;
         GameObject prefab = null;
         if (targetProp.gameObject.transform.childCount > 0)
         {

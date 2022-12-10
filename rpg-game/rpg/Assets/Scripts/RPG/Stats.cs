@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Newtonsoft.Json.Linq;
 namespace RPG
 {
     /// <summary>
@@ -26,12 +26,28 @@ namespace RPG
         {
             return stats[type];
         }
+        public Statistic GetStat(string type)
+        {
+            return stats[Enum.Parse<Statistic.Type>(type)];
+        }
         public IEnumerable<Statistic> GetStats()
         {
             foreach (KeyValuePair<Statistic.Type, Statistic> pair in stats)
             {
                 yield return pair.Value;
             }
+        }
+
+        public static Stats FromJson(JObject json)
+        {
+            Stats stats = new Stats();  // This initializes every stat
+
+            foreach (JProperty property in json.Properties())
+            {
+                stats.GetStat(property.Name).Value = (int)property.Value;
+            }
+
+            return stats;
         }
     }
 }

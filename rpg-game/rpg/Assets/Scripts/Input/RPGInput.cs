@@ -29,8 +29,6 @@ namespace Input
         public AnalogButton mouseScroll;
         public RPGInput()
         {
-            receivers = new List<IInputReceiver>();
-
             forward = new Button(KeyCode.W);
             backward = new Button(KeyCode.S);
             left = new Button(KeyCode.A);
@@ -70,7 +68,13 @@ namespace Input
             mouseY.Update();
             mouseScroll.Update();
 
-            base.SendInput();
+            SendInput();
+        }
+        public override void SendInput()
+        {
+            // Publish OnInput event
+
+            EventManager.OnInput.Invoke(this);
         }
     }
 }

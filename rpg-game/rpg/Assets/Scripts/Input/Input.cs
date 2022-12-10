@@ -5,28 +5,13 @@ namespace Input
 {
     public abstract class Input
     {
-        public List<IInputReceiver> receivers;
         public virtual void Update()
         {
 
         }
         public virtual void SendInput()
         {
-            // Sort input receivers by priority
-            // Higher => First to get input
-            receivers.Sort(delegate (IInputReceiver a, IInputReceiver b) { return b.GetInputPriority().CompareTo(a.GetInputPriority()); });
-
-            for (int i = 0; i < receivers.Count; i++)
-            {
-                receivers[i].OnInputReceived(this);
-            }
-        }
-        public virtual void Subscribe(IInputReceiver receiver)
-        {
-            if (receivers.Contains(receiver) == false)
-            {
-                receivers.Add(receiver);
-            }
+            
         }
         public class Button
         {
@@ -82,11 +67,4 @@ namespace Input
             }
         }
     }
-
-    public interface IInputReceiver
-    {
-        public void OnInputReceived(Input input);
-        public int GetInputPriority();
-    }
-
 }

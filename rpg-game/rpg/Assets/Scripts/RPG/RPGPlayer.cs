@@ -7,12 +7,12 @@ using Input;
 using UnityEngine;
 namespace RPG
 {
-    public class RPGPlayer : Player, Input.IInputReceiver
+    public class RPGPlayer : Player
     {
+        static public new RPGPlayer Current => Player.Current as RPGPlayer;
         public Party Party => party;
         Party party;
         public Selector selector;
-        public System.Action<Party, Party> onPartyChange;
         private void Awake()
         {
             if (current == null)
@@ -21,9 +21,8 @@ namespace RPG
             input = new RPGInput();
             base.cameraController = new CameraControllers.RPGController(this);
 
-            input.Subscribe(this);
-
             selector = new Selector(this);
+            EventManager.OnInput += OnInput;
         }
         void Update()
         {
@@ -38,51 +37,43 @@ namespace RPG
             Party oldParty = this.party;
             this.party = party;
 
-            onPartyChange?.Invoke(oldParty, this.party);
+            EventManager.onPlayerPartySet?.Invoke(this, oldParty, party);
         }
-
-        public void OnInputReceived(Input.Input input)
+        public void OnInput(Input.RPGInput input)
         {
-            RPGInput rpgInput = input as RPGInput;
-
             Vector3Int localMove = Vector3Int.zero;
-            if (rpgInput.forward.Value)
+            if (input.forward.Value)
             {
                 localMove.z++;
             }
 
-            if (rpgInput.backward.Value)
+            if (input.backward.Value)
             {
                 localMove.z--;
             }
 
-            if (rpgInput.right.Value)
+            if (input.right.Value)
             {
                 localMove.x++;
             }
 
-            if (rpgInput.left.Value)
+            if (input.left.Value)
             {
                 localMove.x--;
             }
 
-            if (rpgInput.turnLeft.Pressed)
+            if (input.turnLeft.Pressed)
             {
                 party.FormationRotation -= 90.0f;
             }
 
-            if (rpgInput.turnRight.Pressed)
+            if (input.turnRight.Pressed)
             {
                 party.FormationRotation += 90.0f;
             }
 
             Vector3Int disp = Vector3Int.RoundToInt(Quaternion.AngleAxis(party.FormationRotation, Vector3.up) * localMove);
             party.Move(disp);
-        }
-
-        public int GetInputPriority()
-        {
-            return 0;
         }
     }
 }

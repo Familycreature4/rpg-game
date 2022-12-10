@@ -1,15 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
 using System.IO;
 using System.IO.Compression;
-using System.Text.Json.Serialization;
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RPG.Editor.Entities;
+using RPG.Entities;
 
 namespace RPG.Editor
 {
@@ -105,12 +102,17 @@ namespace RPG.Editor
                 foreach (JObject entityJson in token["entities"].Children<JObject>())
                 {
                     // Determine the type of entity
-                    // Create a gameObject and appropriate component
-                    GameObject gameObject = new GameObject(entityJson["name"].ToString());
-                    System.Type type = System.Type.GetType(entityJson["type"].ToString());
+                    string typeName = entityJson["type"].ToString();
+                    typeName = typeName.Replace("Editor.", "");  // Strip the Editor namespace out of the name
+                    Type objectType = Type.GetType(typeName);
+                    if (objectType != null)
+                    {
+                        // Create a gameObject and appropriate component
+                        GameObject gameObject = new GameObject(entityJson["name"].ToString());
 
-                    Entity entity = gameObject.AddComponent(type) as Entity;
-                    entity.OnDeserialize(entityJson);
+                        Entity entity = gameObject.AddComponent(objectType) as Entity;
+                        entity.OnDeserialize(entityJson);
+                    }
                 }
             }
 
@@ -118,17 +120,22 @@ namespace RPG.Editor
         }
         public static bool SaveWorldExplorer(World world)
         {
+#if UNITY_EDITOR
             string filePath = UnityEditor.EditorUtility.SaveFilePanel("Save World", Serializer.DirectoryPath, "world", Serializer.extension);
             if (filePath != "")
             {
                 return Serializer.SaveWorldJSON(filePath, World.Current);
             }
+#endif
 
             return false;
         }
         public static bool LoadWorldExplorer(World world)
         {
-            string filePath = UnityEditor.EditorUtility.OpenFilePanel("Open World", DirectoryPath, extension);
+            string filePath = default;
+#if UNITY_EDITOR
+            filePath = UnityEditor.EditorUtility.OpenFilePanel("Open World", DirectoryPath, extension);
+#endif
             return LoadWorldJSON(filePath, world);
         }
         static byte[] EncodeTileData(Tile[] tiles)
@@ -222,6 +229,17 @@ namespace RPG.Editor
         {
             string[] split = text.Split(",");
             return new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
+        }
+        public static string AssetToResourcePath(string assetPath)
+        {
+            // Remove Assets/Resources/
+
+            string resourcePath = assetPath.Replace("Assets/Resources/", "");
+
+            int extensionIndex = resourcePath.LastIndexOf('.');
+            if (extensionIndex != -1)
+                resourcePath = resourcePath.Remove(extensionIndex, resourcePath.Length - extensionIndex);
+            return resourcePath;  // REMOVE EXTENSIOn
         }
     }
 }

@@ -9,71 +9,117 @@ namespace CameraControllers
 {
     public class RPGController : CameraController
     {
-        Vector3 angles = new Vector3(45.0f, 30.0f);
-        Vector3 auxillaryAngles;
-        bool useAuxillaryAngles = false;
-        RPGPlayer player;
-        Vector3 origin;
         public RPGController(RPGPlayer player)
         {
             this.player = player;
-            player.input.Subscribe(this);
-
-            player.onPartyChange += OnPartyChanged;
+            EventManager.OnInput += OnInput;
+            EventManager.OnSelect += OnSelect;
+            EventManager.onAttackerTurnStart += OnAttackerTurnStart;
         }
+        RPGPlayer player;
+        Vector3 origin;
+        float distance;
+        float maxDistance = 16.0f;
+        Vector3 angles;
+        Vector3 originOffset;
+        float targetDistance = 6.0f;
+        Vector3 targetAngles = new Vector3(40, 0, 0);
+        Func<Vector3> originGetter;
+        bool useLerp = true;
+        bool useCollision = true;
         public override void LateUpdate()
         {
-            Vector3 targetOriginPosition = origin;
-            Quaternion targetRotation = Quaternion.Euler(angles);
+            useLerp = true;
 
-            if (player != null && player.Party != null)
+            Vector3 targetOrigin = Vector3.zero;
+            if (originGetter != null)
             {
-                if (Director.Current.battleManager != null)
-                    targetOriginPosition = Director.Current.battleManager.ActiveParty.GetCenter();
-                else
-                    targetOriginPosition = player.Party.GetCenter();
+                targetOrigin = originGetter();
+            }
+            else if (player != null && player.Party != null)
+            {
+                targetOrigin = player.Party.GetCenter();
+            }
+            // Update camera transform
 
-                if (useAuxillaryAngles)
-                    targetRotation = Quaternion.Euler(auxillaryAngles);
-                else
-                    targetRotation = Quaternion.Euler(angles.x, player.Party.FormationRotation, angles.z);
+            distance = useLerp ? Mathf.Lerp(distance, targetDistance, 10.0f * Time.deltaTime) : targetDistance;
+
+            // Clamp offset distance
+            float maxDistance = Mathf.Abs(this.maxDistance - targetDistance);
+            originOffset = Vector3.ClampMagnitude(originOffset, maxDistance);
+
+            origin = useLerp ? Vector3.Lerp(origin, targetOrigin + originOffset, 20.0f * Time.deltaTime) : targetOrigin + originOffset;
+            angles = useLerp ? Quaternion.Slerp(Quaternion.Euler(angles), Quaternion.Euler(targetAngles), 20.0f * Time.deltaTime).eulerAngles : targetAngles;
+
+            Vector3 cameraTargetPosition = origin + Quaternion.Euler(angles) * -Vector3.forward * distance;
+
+            if (useCollision)
+            {
+                Vector3 origin = targetOrigin;
+                Vector3 difference = cameraTargetPosition - origin;
+                RaycastHit[] hits = Physics.SphereCastAll(origin, 0.2f, difference, difference.magnitude, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                Array.Sort(hits, (RaycastHit a, RaycastHit b) => { return a.distance.CompareTo(b.distance); });
+
+                foreach (RaycastHit hit in hits)
+                {
+                    if (hit.collider.gameObject.GetComponent<Pawn>() != null)
+                    {
+                        continue;
+                    }
+
+                    cameraTargetPosition = origin + hit.distance * difference.normalized;
+                    break;
+                }
             }
 
-
-            origin = Vector3.Lerp(origin, targetOriginPosition, 10.0f * Time.deltaTime);
-            Quaternion newRotation = useAuxillaryAngles ? targetRotation : Quaternion.Slerp(camera.transform.rotation, targetRotation, 10.0f * Time.deltaTime);
-
-            camera.transform.position = origin + (newRotation * -Vector3.forward * 10.0f);
-            camera.transform.rotation = newRotation;
+            camera.transform.position = cameraTargetPosition;
+            camera.transform.rotation = Quaternion.Euler(angles);
         }
-        public override void ReceiveInput(Input.Input input)
+        void OnInput(Input.RPGInput input)
         {
-            Input.RPGInput rpgInput = input as Input.RPGInput;
+            bool hideCursor = input.rightClick.Value || input.middleClick.Value;
 
-            if (rpgInput.rightClick.Pressed)
+            if (hideCursor)
             {
-                // Begin auxillary angles
-                auxillaryAngles = camera.transform.rotation.eulerAngles;
-                useAuxillaryAngles = true;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                useLerp = false;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                useLerp = true;
             }
 
-            if (rpgInput.rightClick.Value && useAuxillaryAngles)
+            if (input.rightClick.Value)
             {
-                auxillaryAngles.x += rpgInput.mouseY.Value * 6.0f;
-                auxillaryAngles.x = Mathf.Clamp(auxillaryAngles.x, -90f, 90f);
-                auxillaryAngles.y += rpgInput.mouseX.Value * 6.0f;
+                targetAngles.x += input.mouseY.Value * 6.0f;
+                targetAngles.x = Mathf.Clamp(targetAngles.x, -90, 90);
+
+                targetAngles.y += input.mouseX.Value * 6.0f;
+            }
+            else if (input.middleClick.Value)  // Pan
+            {
+                originOffset += Quaternion.Euler(targetAngles) * new Vector3(-input.mouseX.Value, -input.mouseY.Value, 0.0f) * 0.5f;
+            }
+
+            targetDistance = Mathf.Clamp(targetDistance + input.mouseScroll.Value * 6.0f, 2.0f, maxDistance);
+            
+        }
+        void OnSelect(RPG.Events.SelectArgs args)
+        {
+            if (args.IsPawn)
+            {
+                originOffset = Vector3.zero;
+                Pawn pawn = args.Pawn;
+                this.originGetter = delegate () { return pawn.Coordinates + Vector3.one / 2.0f; };
             }
         }
-        void OnPartyChanged(Party oldParty, Party newParty)
+        void OnAttackerTurnStart(RPG.Battle.Battle battle, RPG.Battle.Attackers.Attacker attacker)
         {
-            if (oldParty != null)
-                oldParty.onMove -= OnPartyMove;
-
-            newParty.onMove += OnPartyMove;
-        }
-        void OnPartyMove(Party party)
-        {
-            //useAuxillaryAngles = false;
+            originOffset = Vector3.zero;
+            this.originGetter = delegate () { return attacker.Party.GetCenter(); };
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using RPG.Items;
+using RPG.Orders;
 namespace RPG
 {
     /// <summary>
@@ -15,10 +16,19 @@ namespace RPG
         {
             get
             {
-                return Time.time >= nextMoveTime && (Director.Current != null && Director.Current.battleManager == null);
+                return Time.time >= nextMoveTime;
             }
         }
         public TileTransform TileTransform => GetComponent<TileTransform>();
+        public List<Order> Orders => orders;
+        public int Health
+        {
+            get
+            {
+                return health;
+            }
+        }
+        public bool IsAlive => Health > 0;
         public bool IsLeader
         {
             get
@@ -33,10 +43,6 @@ namespace RPG
                 }
             }
         }
-        public Party party;
-        public Items.Inventory inventory;
-        public Stats stats;
-        public new string name;
         public Vector3Int Coordinates
         {
             get
@@ -48,53 +54,56 @@ namespace RPG
                 TileTransform.coordinates = value;
             }
         }
+        List<Order> orders = new List<Order>();
+        public Party party;
+        public Items.Inventory inventory;
+        public Stats stats;
+        public Sprite image;
+        public new string name;
         float moveDelay = 0.2f;  // Amount of time in seconds between movements
         float nextMoveTime = 0;
+        public float battleMoveDistance = 5.0f;
+        int health;
         private void Start()
         {
-            stats = new Stats();
             inventory = new Items.Inventory(this);
             inventory.Add(Instantiate(Items.Weapon.GetRandomWeapon()));
             //MoveToWalkableSpace();
             transform.position = TileTransform.coordinates + Vector3.one / 2.0f;
+
+            orders.Add(new Orders.MoveTo(this, () => {
+                if (party != null && party.Pawns != null)
+                {
+                    int index = party.IndexOf(this);
+                    if (index < party.formationLocalPositions.Length && index >= 0)
+                        return party.TransformFormationPosition(party.formationLocalPositions[index]);
+                }
+
+                return this.Coordinates;
+            }, false));
+
+            health = 100;
         }
         private void Update()
         {
-            if (party != null)
+            // Get first order
+            if (orders.Count > 0 && (IsLeader == false || Director.Current.battleManager != null))
             {
-                int index = party.pawns.IndexOf(this);
-                Vector3Int targetPosition = party.TransformFormationPosition(party.formationLocalPositions[index]);
-                bool inFormation = Coordinates == targetPosition;
-                bool isLeader = index == 0;
-
-                // Leader is manually controlled
-                // Have non-leader pawns path to formation position    
-                if (isLeader == false && inFormation == false)
+                // Sort orders
+                orders.Sort(delegate (Order orderA, Order orderB) { return orderA.Priority.CompareTo(orderB.Priority); });
+                Order order = orders[0];
+                if (order.IsComplete)
                 {
-                    List<Vector3Int> path = new List<Vector3Int>();
-                    if (TileTools.GetPath(Coordinates, targetPosition, delegate(Vector3Int c) { return this.CanStandHere(c); }, out path, (int)Vector3.Distance(Coordinates, targetPosition) * 10 + 10))
-                    {
-                        Vector3Int targetPos = path[0];
-                        if (path.Count > 1)
-                            targetPos = path[1];
-                        Move(targetPos - Coordinates);
-
-                        for (int a = 0; a < path.Count - 1; a++)
-                        {
-                            Debug.DrawLine(path[a] + Vector3.one / 2, path[a + 1] + Vector3.one / 2, Color.white);
-                        }
-                        for (int a = 0; a < path.Count; a++)
-                        {
-                            Debug.DrawRay(path[a] + Vector3.one / 2, Vector3.up, Color.red);
-                        }
-                    }
+                    orders.RemoveAt(0);
                 }
-
-                if (isLeader || inFormation)
+                else
                 {
-                    this.transform.rotation = Quaternion.AngleAxis(party.FormationRotation + 180.0f, Vector3.up);
+                    order.Think();
                 }
             }
+        }
+        private void LateUpdate()
+        {
             // Move the gameobject to the world coordinates
             Vector3 targetGOPosition = (Vector3)(TileTransform.coordinates + Vector3.one / 2.0f);
             Vector3 position = Vector3.MoveTowards(transform.position, targetGOPosition, moveDelay);
@@ -134,6 +143,30 @@ namespace RPG
 
             return false;
         }
+        public void ResetMoveTimer()
+        {
+            nextMoveTime = Time.time;
+        }
         public bool CanStandHere(Vector3Int coord) => MoveHelper.CanStandHere(coord, TileTransform.size, TileTransform, party);
+        public void Damage(int amount)
+        {
+            int newHealth = Mathf.Max(health - amount, 0);
+            health = newHealth;
+
+            if (party == RPGPlayer.Current.Party && health <= 0)
+                health = 1;
+
+            EventManager.onPawnDamaged?.Invoke(this, amount);
+
+            if (health <= 0)
+            {
+                OnDeath();
+            }
+        }
+        void OnDeath()
+        {
+            gameObject.SetActive(false);
+            //onPawnDeath?.Invoke(this);
+        }
     }
 }

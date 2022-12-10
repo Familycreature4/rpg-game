@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using RPG.Editor.Entities;
-[CustomEditor(typeof(RPG.Editor.Entities.Environment))]
+using RPG.Entities;
+[CustomEditor(typeof(RPG.Entities.Environment))]
 public class EnvironmentInspector : Editor
 {
     public override void OnInspectorGUI()
